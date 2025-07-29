@@ -8,6 +8,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Load secrets from properties file
+val secretsPropertiesFile = rootProject.file("secrets.properties")
+val secretsProperties = java.util.Properties()
+if (secretsPropertiesFile.exists()) {
+    secretsProperties.load(secretsPropertiesFile.inputStream())
+}
+
 android {
     namespace = "com.example.hemophilia_manager"
     compileSdk = flutter.compileSdkVersion
@@ -32,6 +39,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Inject Google Maps API key from secrets
+        manifestPlaceholders["googleMapsApiKey"] = secretsProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
     }
 
     buildTypes {

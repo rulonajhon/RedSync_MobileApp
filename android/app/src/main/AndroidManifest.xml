@@ -45,7 +45,7 @@
         </receiver>
         
         <meta-data android:name="com.google.android.geo.API_KEY"
-                   android:value="AIzaSyACs7QdWeo6T65-_znx83BvjoVIEI7GGiI"/>
+                   android:value="${googleMapsApiKey}"/>
         
         <meta-data
             android:name="flutterEmbedding"

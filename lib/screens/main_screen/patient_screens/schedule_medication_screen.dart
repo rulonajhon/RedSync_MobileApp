@@ -206,47 +206,6 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                   ),
 
                   SizedBox(height: 16),
-
-                  // Test Notification Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _testImmediateNotification,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.blueAccent,
-                            side: BorderSide(color: Colors.blueAccent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: Icon(Icons.notifications_active, size: 18),
-                          label: Text(
-                            'Test Notification',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _testScheduledNotification,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orangeAccent,
-                            side: BorderSide(color: Colors.orangeAccent),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: Icon(Icons.schedule, size: 18),
-                          label: Text(
-                            'Test in 5s',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -550,64 +509,6 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
       _showErrorDialog('Failed to schedule medication: $e');
     } finally {
       setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _testImmediateNotification() async {
-    try {
-      await _notificationService.initialize();
-      final permissionGranted = await _notificationService.requestPermissions();
-
-      if (!permissionGranted) {
-        _showInfoDialog(
-          'Permission Required',
-          'Please enable notification permissions in your device settings to receive medication reminders.',
-        );
-        return;
-      }
-
-      await _notificationService.showTestNotification();
-
-      _showInfoDialog(
-        'Test Notification Sent',
-        'An immediate test notification should appear in your notification center.',
-      );
-    } catch (e) {
-      print('Test notification error: $e');
-      _showErrorDialog(
-        'Failed to send test notification. Please check your notification settings.',
-      );
-    }
-  }
-
-  Future<void> _testScheduledNotification() async {
-    try {
-      await _notificationService.initialize();
-      final permissionGranted = await _notificationService.requestPermissions();
-
-      if (!permissionGranted) {
-        _showInfoDialog(
-          'Permission Required',
-          'Please enable notification permissions in your device settings to receive medication reminders.',
-        );
-        return;
-      }
-
-      print('=== Testing Scheduled Notification ===');
-      print('Current time: ${DateTime.now()}');
-
-      await _notificationService.scheduleTestNotification();
-
-      // Check pending notifications after scheduling
-      await _notificationService.debugPendingNotifications();
-
-      _showInfoDialog(
-        'Test Notification Scheduled',
-        'A test notification has been scheduled to appear in 5 seconds. Check the debug console for details.',
-      );
-    } catch (e) {
-      print('Test scheduled notification error: $e');
-      _showErrorDialog('Failed to schedule test notification. Error: $e');
     }
   }
 
