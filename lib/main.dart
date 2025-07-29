@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:hemophilia_manager/routes/routes.dart';
 import 'package:hemophilia_manager/screens/registration/authentication_landing_screen.dart';
-import 'package:hemophilia_manager/screens/main_screen/patient_screens/log_bleed.dart';
 import 'package:hemophilia_manager/screens/onboarding/onboarding_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hemophilia_manager/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_display.dart';
 import 'package:hemophilia_manager/screens/main_screen/healthcare_provider_screen/healthcare_main_screen.dart';
 import 'package:hemophilia_manager/services/openai_service.dart';
+import 'package:hemophilia_manager/services/notification_service.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
@@ -26,10 +24,14 @@ void main() async {
     print('Warning: Failed to initialize OpenAI service: $e');
   }
 
-  final dir = await getApplicationDocumentsDirectory();
-  Hive.init(dir.path);
-  Hive.registerAdapter(BleedLogAdapter());
-  await Hive.openBox<BleedLog>('bleed_logs');
+  // Initialize Notification service
+  try {
+    await NotificationService().initialize();
+    print('Notification service initialized successfully');
+  } catch (e) {
+    print('Warning: Failed to initialize Notification service: $e');
+    // App can still function without notifications
+  }
 
   runApp(MyApp());
 }
@@ -153,7 +155,6 @@ class AppInitializer extends StatefulWidget {
 
 class _AppInitializerState extends State<AppInitializer> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-  bool _isLoading = true;
 
   @override
   void initState() {

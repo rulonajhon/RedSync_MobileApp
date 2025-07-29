@@ -36,7 +36,7 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
   Future<void> _logout() async {
     try {
       print('DEBUG - Starting logout process');
-      
+
       // Clear all secure storage data explicitly
       await _secureStorage.delete(key: 'isLoggedIn');
       await _secureStorage.delete(key: 'userRole');
@@ -44,21 +44,21 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       await _secureStorage.delete(key: 'saved_email');
       await _secureStorage.delete(key: 'saved_password');
       await _secureStorage.delete(key: 'remember_me');
-      
+
       // Also use deleteAll as backup
       await _secureStorage.deleteAll();
-      
+
       print('DEBUG - Cleared all secure storage during logout');
-      
+
       if (!mounted) return;
-      
+
       // Navigate to authentication screen and clear all routes
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => AuthenticationLandingScreen()),
         (route) => false,
       );
-      
+
       print('DEBUG - Navigated to authentication screen');
     } catch (e) {
       print('Error during logout: $e');
@@ -66,7 +66,9 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => AuthenticationLandingScreen()),
+          MaterialPageRoute(
+            builder: (context) => AuthenticationLandingScreen(),
+          ),
           (route) => false,
         );
       }
@@ -132,6 +134,7 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       ),
       body: _screens[_currentIndex],
       floatingActionButton: FloatingActionButton.large(
+        heroTag: "main_screen_fab", // Unique tag to avoid conflicts
         onPressed: () {
           showModalBottomSheet(
             context: context,
@@ -148,7 +151,9 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
                   ),
                   child: SingleChildScrollView(
                     child: Column(
@@ -198,7 +203,10 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
                           bgColor: Color(0xFF64B5F6),
                           onTap: () {
                             Navigator.pop(context);
-                            Navigator.pushNamed(context, '/schedule_medication');
+                            Navigator.pushNamed(
+                              context,
+                              '/schedule_medication',
+                            );
                           },
                         ),
                         SizedBox(height: 5),
@@ -226,11 +234,17 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
                           width: double.infinity,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.redAccent, width: 1.5),
+                            border: Border.all(
+                              color: Colors.redAccent,
+                              width: 1.5,
+                            ),
                             color: Colors.white,
                           ),
                           child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 8,
+                            ),
                             leading: Icon(
                               FontAwesomeIcons.plus,
                               color: Colors.redAccent,
@@ -266,7 +280,9 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar(
         icons: iconList,
-        activeIndex: _currentIndex >= 2 ? _currentIndex + 1 : _currentIndex, // Adjust active index display
+        activeIndex: _currentIndex >= 2
+            ? _currentIndex + 1
+            : _currentIndex, // Adjust active index display
         gapLocation: GapLocation.center,
         notchSmoothness: NotchSmoothness.softEdge,
         height: 60,
@@ -305,11 +321,7 @@ class _ActionTile extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        leading: Icon(
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
+        leading: Icon(icon, color: Colors.white, size: 24),
         title: Text(
           label,
           style: TextStyle(
@@ -318,11 +330,7 @@ class _ActionTile extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          color: Colors.white,
-          size: 16,
-        ),
+        trailing: Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
         onTap: onTap,
       ),
     );

@@ -886,10 +886,10 @@ class _LogBleedState extends State<LogBleed> {
                       : () async {
                           await _saveLog();
                           if (!mounted) return;
-                          // Navigate back to dashboard with a result to trigger refresh
-                          Navigator.of(
+                          Navigator.pushReplacementNamed(
                             context,
-                          ).popUntil((route) => route.isFirst);
+                            '/user_screen',
+                          );
                         },
                   icon: _isSaving
                       ? SizedBox(

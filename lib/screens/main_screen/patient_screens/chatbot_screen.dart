@@ -74,7 +74,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         setState(() {
           _messages.add(
             ChatMessage(
-              text: "I'm sorry, I couldn't generate a response at the moment. Please try asking your question again.",
+              text:
+                  "I'm sorry, I couldn't generate a response at the moment. Please try asking your question again.",
               isUser: false,
             ),
           );
@@ -127,7 +128,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 color: Colors.red.shade100,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(Icons.smart_toy, color: Colors.red.shade700, size: 20),
+              child: Icon(
+                Icons.smart_toy,
+                color: Colors.red.shade700,
+                size: 20,
+              ),
             ),
             SizedBox(width: 12),
             Column(
@@ -244,11 +249,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               color: Colors.red.shade50,
               borderRadius: BorderRadius.circular(40),
             ),
-            child: Icon(
-              Icons.smart_toy,
-              size: 40,
-              color: Colors.red.shade700,
-            ),
+            child: Icon(Icons.smart_toy, size: 40, color: Colors.red.shade700),
           ),
           SizedBox(height: 24),
           Text(
@@ -264,10 +265,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               'Start a conversation to get personalized hemophilia care assistance',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ),
@@ -277,7 +275,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   Widget _buildMessageBubble(ChatMessage message, int index) {
-    final isConsecutive = index > 0 && _messages[index - 1].isUser == message.isUser;
+    final isConsecutive =
+        index > 0 && _messages[index - 1].isUser == message.isUser;
 
     return Container(
       margin: EdgeInsets.only(
@@ -299,7 +298,11 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   color: Colors.red.shade100,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(Icons.smart_toy, color: Colors.red.shade700, size: 16),
+                child: Icon(
+                  Icons.smart_toy,
+                  color: Colors.red.shade700,
+                  size: 16,
+                ),
               )
             else
               SizedBox(width: 32),
@@ -313,12 +316,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: message.isUser
-                    ? Colors.red.shade700
-                    : Colors.white,
+                color: message.isUser ? Colors.red.shade700 : Colors.white,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(message.isUser ? 20 : (isConsecutive ? 8 : 20)),
-                  topRight: Radius.circular(message.isUser ? (isConsecutive ? 8 : 20) : 20),
+                  topLeft: Radius.circular(
+                    message.isUser ? 20 : (isConsecutive ? 8 : 20),
+                  ),
+                  topRight: Radius.circular(
+                    message.isUser ? (isConsecutive ? 8 : 20) : 20,
+                  ),
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
@@ -410,7 +415,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.red.shade700),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.red.shade700,
+                    ),
                   ),
                 ),
                 SizedBox(width: 12),
@@ -492,6 +499,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                   width: 48,
                   height: 48,
                   child: FloatingActionButton(
+                    heroTag:
+                        "chatbot_send_fab", // Unique tag to avoid conflicts
                     mini: true,
                     backgroundColor: Colors.red.shade700,
                     elevation: 0,
@@ -502,7 +511,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
                           )
                         : Icon(Icons.send, color: Colors.white, size: 20),
