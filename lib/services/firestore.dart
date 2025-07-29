@@ -826,8 +826,9 @@ class FirestoreService {
   Future<void> markMedicationTaken(String uid, String scheduleId) async {
     try {
       final today = DateTime.now();
-      final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-      
+      final dateKey =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
       await _db.collection('medication_taken').add({
         'uid': uid,
         'scheduleId': scheduleId,
@@ -846,8 +847,9 @@ class FirestoreService {
   Future<bool> isMedicationTakenToday(String uid, String scheduleId) async {
     try {
       final today = DateTime.now();
-      final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-      
+      final dateKey =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
       final snapshot = await _db
           .collection('medication_taken')
           .where('uid', isEqualTo: uid)
@@ -855,7 +857,7 @@ class FirestoreService {
           .where('date', isEqualTo: dateKey)
           .limit(1)
           .get();
-      
+
       return snapshot.docs.isNotEmpty;
     } catch (e) {
       print('Error checking if medication was taken: $e');
@@ -867,14 +869,15 @@ class FirestoreService {
   Future<Set<String>> getTakenMedicationsToday(String uid) async {
     try {
       final today = DateTime.now();
-      final dateKey = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-      
+      final dateKey =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
       final snapshot = await _db
           .collection('medication_taken')
           .where('uid', isEqualTo: uid)
           .where('date', isEqualTo: dateKey)
           .get();
-      
+
       return snapshot.docs
           .map((doc) => doc.data()['scheduleId'] as String)
           .toSet();

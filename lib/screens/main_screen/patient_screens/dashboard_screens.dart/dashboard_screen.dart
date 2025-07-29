@@ -665,7 +665,10 @@ class _DashboardState extends State<Dashboard> {
                   children: [
                     Text(
                       'Scheduled for $timeString',
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
                     ),
                     Container(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -737,5 +740,4 @@ class _DashboardState extends State<Dashboard> {
       );
     }
   }
-
 }
