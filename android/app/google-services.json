@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "175903179489",
+    "project_id": "redsyncdb",
+    "storage_bucket": "redsyncdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:175903179489:android:2e24139fae9e2517d4eda0",
+        "android_client_info": {
+          "package_name": "com.example.hemophilia_manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZMQmfVC_hMQBGmRLo1pU7fFFwXZ1QGoE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
