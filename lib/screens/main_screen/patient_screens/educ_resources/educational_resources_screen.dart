@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'educational_topics_screen.dart';
+import 'educational_data_service.dart';
 
 class EducationalResourcesScreen extends StatefulWidget {
   const EducationalResourcesScreen({super.key});
 
   @override
-  State<EducationalResourcesScreen> createState() => _EducationalResourcesScreenState();
+  State<EducationalResourcesScreen> createState() =>
+      _EducationalResourcesScreenState();
 }
 
-class _EducationalResourcesScreenState extends State<EducationalResourcesScreen> {
+class _EducationalResourcesScreenState
+    extends State<EducationalResourcesScreen> {
+  final List<Map<String, dynamic>> categories =
+      EducationalDataService.getCategoryData();
+  final Map<String, List<Map<String, dynamic>>> topicsData =
+      EducationalDataService.getEducationalTopics();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,75 +32,54 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
                 children: [
                   Text(
                     'Educational Resources',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28, color: Colors.redAccent),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      color: Colors.redAccent,
+                    ),
                   ),
                   Text('Free Online/Offline Resources'),
                 ],
               ),
 
               // TODO: Add a search bar here if needed
-        
               SizedBox(height: 15),
-        
+
               Expanded(
-                child: ListView(
-                  children: [
-                    ActionList(
-                      listTitle: 'Understanding Hemophilia',
-                      listIcon: FontAwesomeIcons.dna,
-                      listIconColor: Colors.deepPurple,
-                      listSubtitle: '5 Topics',
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    ActionList(
-                      listTitle: 'Treatment & Management',
-                      listIcon: FontAwesomeIcons.syringe,
-                      listIconColor: Colors.green,
-                      listSubtitle: '7 Topics',
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    ActionList(
-                      listTitle: 'Self-Care & Monitoring',
-                      listIcon: FontAwesomeIcons.notesMedical,
-                      listIconColor: Colors.blueAccent,
-                      listSubtitle: '15 Topics',
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    ActionList(
-                      listTitle: 'Common Complications',
-                      listIcon: FontAwesomeIcons.triangleExclamation,
-                      listIconColor: Colors.redAccent,
-                      listSubtitle: '10 Topics',
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    ActionList(
-                      listTitle: 'For Parents and Caregivers',
-                      listIcon: FontAwesomeIcons.users,
-                      listIconColor: Colors.orangeAccent,
-                      listSubtitle: '10 Topics',
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    ActionList(
-                      listTitle: 'Emergency Instructions',
-                      listIcon: FontAwesomeIcons.truckMedical,
-                      listIconColor: Colors.pinkAccent,
-                      listSubtitle: '10 Topics',
-                      onTap: () {},
-                    ),
-                    SizedBox(height: 10),
-                    ActionList(
-                      listTitle: 'Learning Material for all Ages',
-                      listIcon: FontAwesomeIcons.bookOpenReader,
-                      listIconColor: Colors.yellow,
-                      listSubtitle: '10 Topics',
-                      onTap: () {},
-                    ),
-                  ],
+                child: ListView.builder(
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    final color = EducationalDataService.getColorFromString(
+                      category['color'],
+                    );
+                    final topics = topicsData[category['title']] ?? [];
+
+                    return Column(
+                      children: [
+                        ActionList(
+                          listTitle: category['title'],
+                          listIcon: _getIconData(category['icon']),
+                          listIconColor: color,
+                          listSubtitle: '${topics.length} Topics',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EducationalTopicsScreen(
+                                  categoryTitle: category['title'],
+                                  categoryIcon: category['icon'],
+                                  categoryColor: color,
+                                  topics: topics,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        SizedBox(height: 10),
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -99,6 +87,27 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
         ),
       ),
     );
+  }
+
+  IconData _getIconData(String iconName) {
+    switch (iconName) {
+      case 'dna':
+        return FontAwesomeIcons.dna;
+      case 'syringe':
+        return FontAwesomeIcons.syringe;
+      case 'notesMedical':
+        return FontAwesomeIcons.notesMedical;
+      case 'triangleExclamation':
+        return FontAwesomeIcons.triangleExclamation;
+      case 'users':
+        return FontAwesomeIcons.users;
+      case 'truckMedical':
+        return FontAwesomeIcons.truckMedical;
+      case 'bookOpenReader':
+        return FontAwesomeIcons.bookOpenReader;
+      default:
+        return FontAwesomeIcons.book;
+    }
   }
 }
 

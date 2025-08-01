@@ -6,6 +6,7 @@ import 'package:hemophilia_manager/screens/main_screen/patient_screens/dashboard
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/educ_resources/educational_resources_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemophilia_manager/screens/registration/authentication_landing_screen.dart';
+import 'package:hemophilia_manager/auth/auth.dart';
 
 class MainScreenDisplay extends StatefulWidget {
   const MainScreenDisplay({super.key});
@@ -37,6 +38,18 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
     try {
       print('DEBUG - Starting logout process');
 
+      // Check if user is a guest
+      final isGuest = await _secureStorage.read(key: 'isGuest');
+
+      // Sign out from Firebase Auth (this handles both regular and anonymous users)
+      try {
+        final authService = AuthService();
+        await authService.signOut();
+        print('DEBUG - Signed out from Firebase Auth');
+      } catch (authError) {
+        print('DEBUG - Firebase Auth signout error (continuing): $authError');
+      }
+
       // Clear all secure storage data explicitly
       await _secureStorage.delete(key: 'isLoggedIn');
       await _secureStorage.delete(key: 'userRole');
@@ -44,6 +57,7 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       await _secureStorage.delete(key: 'saved_email');
       await _secureStorage.delete(key: 'saved_password');
       await _secureStorage.delete(key: 'remember_me');
+      await _secureStorage.delete(key: 'isGuest');
 
       // Also use deleteAll as backup
       await _secureStorage.deleteAll();
@@ -60,6 +74,21 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       );
 
       print('DEBUG - Navigated to authentication screen');
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isGuest == 'true'
+                  ? 'Guest session ended'
+                  : 'Logged out successfully',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
       print('Error during logout: $e');
       // Even if there's an error, still navigate to authentication screen
@@ -97,7 +126,7 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       appBar: AppBar(
         toolbarHeight: 70,
         title: Image.asset('assets/images/app_logo.png', width: 60),
-        centerTitle: true,
+
         backgroundColor: Colors.white,
         foregroundColor: Colors.redAccent,
         actions: [
@@ -141,9 +170,12 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
               },
               child: CircleAvatar(
                 radius: 20,
-                // backgroundImage: AssetImage(''), 
+                // backgroundImage: AssetImage(''),
                 // TODO: Must put image here coming from firebase storage
-                child: Icon(FontAwesomeIcons.solidUser, color: Colors.redAccent),
+                child: Icon(
+                  FontAwesomeIcons.solidUser,
+                  color: Colors.redAccent,
+                ),
               ),
             ),
           ),
