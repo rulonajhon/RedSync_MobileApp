@@ -30,14 +30,21 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
     super.dispose();
   }
 
-  Future<void> _handleRequest(String requestId, String patientUid, bool accept) async {
+  Future<void> _handleRequest(
+    String requestId,
+    String patientUid,
+    bool accept,
+  ) async {
     try {
       if (accept) {
         // Accept the request
-        await FirebaseFirestore.instance.collection('data_sharing_requests').doc(requestId).update({
-          'status': 'accepted',
-          'acceptedAt': FieldValue.serverTimestamp(),
-        });
+        await FirebaseFirestore.instance
+            .collection('data_sharing_requests')
+            .doc(requestId)
+            .update({
+              'status': 'accepted',
+              'acceptedAt': FieldValue.serverTimestamp(),
+            });
 
         // Create a data sharing relationship
         await FirebaseFirestore.instance.collection('data_sharing').add({
@@ -56,10 +63,13 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
         _showSnackBar('Request accepted successfully', Colors.green);
       } else {
         // Reject the request
-        await FirebaseFirestore.instance.collection('data_sharing_requests').doc(requestId).update({
-          'status': 'rejected',
-          'rejectedAt': FieldValue.serverTimestamp(),
-        });
+        await FirebaseFirestore.instance
+            .collection('data_sharing_requests')
+            .doc(requestId)
+            .update({
+              'status': 'rejected',
+              'rejectedAt': FieldValue.serverTimestamp(),
+            });
 
         // Send notification to patient
         await _firestoreService.createNotification(
@@ -75,12 +85,9 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
   }
 
   void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 
   @override
@@ -88,30 +95,24 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 70,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.redAccent,
-          labelColor: Colors.redAccent,
-          unselectedLabelColor: Colors.black54,
-          indicatorWeight: 3,
-          labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          tabs: const [
-            Tab(text: 'Patients List'),
-            Tab(text: 'Incoming Request'),
-          ],
+        title: Text(
+          'RedSync PH',
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
-        title: Image.asset('assets/images/app_logo.png', width: 60),
-        centerTitle: true,
+        backgroundColor: Colors.white,
         foregroundColor: Colors.redAccent,
+        elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CircleAvatar(
-              backgroundColor: Colors.redAccent.withOpacity(0.15),
+              backgroundColor: Colors.redAccent.withOpacity(0.1),
               child: IconButton(
-                icon: const Icon(FontAwesomeIcons.solidBell, color: Colors.redAccent),
+                icon: const Icon(
+                  FontAwesomeIcons.solidBell,
+                  color: Colors.redAccent,
+                  size: 18,
+                ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/notifications');
                 },
@@ -119,15 +120,15 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 12.0),
+            padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
                 Navigator.pushNamed(context, '/settings');
               },
               child: CircleAvatar(
                 radius: 20,
-                backgroundImage: AssetImage('assets/avatar_placeholder.png'),
-                child: Icon(Icons.person, color: Colors.white70),
+                backgroundColor: Colors.grey.shade200,
+                child: Icon(Icons.person, color: Colors.grey.shade600),
               ),
             ),
           ),
@@ -182,7 +183,11 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                        Icon(
+                          Icons.people_outline,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         SizedBox(height: 16),
                         Text(
                           'No patients yet',
@@ -202,7 +207,8 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                 return ListView.builder(
                   itemCount: dataSharingDocs.length,
                   itemBuilder: (context, index) {
-                    final sharingData = dataSharingDocs[index].data() as Map<String, dynamic>;
+                    final sharingData =
+                        dataSharingDocs[index].data() as Map<String, dynamic>;
                     final patientUid = sharingData['patientUid'];
 
                     return FutureBuilder<Map<String, dynamic>?>(
@@ -232,7 +238,11 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                               backgroundColor: Colors.redAccent,
                               child: Text(
                                 (userData['name'] ?? 'U')[0].toUpperCase(),
-                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             title: Text(
@@ -243,7 +253,33 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                               userData['email'] ?? 'No email',
                               style: TextStyle(color: Colors.grey.shade600),
                             ),
-                            trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Navigate to chat with this patient
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Opening chat with ${userData['name']}',
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  },
+                                  icon: Icon(
+                                    FontAwesomeIcons.message,
+                                    color: Colors.blueAccent,
+                                    size: 18,
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: Colors.grey,
+                                ),
+                              ],
+                            ),
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -304,7 +340,11 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         SizedBox(height: 16),
                         Text(
                           'No pending requests',
@@ -362,14 +402,20 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                                   CircleAvatar(
                                     backgroundColor: Colors.blueAccent,
                                     child: Text(
-                                      (userData['name'] ?? 'U')[0].toUpperCase(),
-                                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                                      (userData['name'] ?? 'U')[0]
+                                          .toUpperCase(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           userData['name'] ?? 'Unknown Patient',
@@ -403,12 +449,18 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                                 children: [
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () => _handleRequest(requestId, patientUid, true),
+                                      onPressed: () => _handleRequest(
+                                        requestId,
+                                        patientUid,
+                                        true,
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.green,
                                         foregroundColor: Colors.white,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                       ),
                                       child: Text('Accept'),
@@ -417,12 +469,18 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                                   SizedBox(width: 12),
                                   Expanded(
                                     child: ElevatedButton(
-                                      onPressed: () => _handleRequest(requestId, patientUid, false),
+                                      onPressed: () => _handleRequest(
+                                        requestId,
+                                        patientUid,
+                                        false,
+                                      ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.grey.shade300,
                                         foregroundColor: Colors.grey.shade700,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                       ),
                                       child: Text('Decline'),

@@ -629,3 +629,5 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
     super.dispose();
   }
 }
+
+// TODO: Add calendar integration for medication reminders

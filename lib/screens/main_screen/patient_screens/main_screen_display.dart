@@ -125,21 +125,19 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 70,
-        title: Image.asset('assets/images/app_logo.png', width: 60),
-
+        title: Text(
+          'RedSync PH',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.redAccent,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CircleAvatar(
-              // ignore: deprecated_member_use
-              backgroundColor: Colors.redAccent.withOpacity(0.15),
+              backgroundColor: Colors.redAccent.withOpacity(0.1),
               child: IconButton(
-                icon: const Icon(
-                  FontAwesomeIcons.solidBell,
-                  color: Colors.redAccent,
-                ),
+                icon: const Icon(FontAwesomeIcons.solidBell, color: Colors.redAccent, size: 18),
                 onPressed: () {
                   Navigator.pushNamed(context, '/notifications');
                 },
@@ -149,13 +147,21 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: CircleAvatar(
-              // ignore: deprecated_member_use
-              backgroundColor: Colors.redAccent.withOpacity(0.15),
+              backgroundColor: Colors.redAccent.withOpacity(0.1),
               child: IconButton(
-                icon: const Icon(
-                  FontAwesomeIcons.solidMessage,
-                  color: Colors.redAccent,
-                ),
+                icon: const Icon(FontAwesomeIcons.globe, color: Colors.redAccent, size: 18),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/community');
+                },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: CircleAvatar(
+              backgroundColor: Colors.redAccent.withOpacity(0.1),
+              child: IconButton(
+                icon: const Icon(FontAwesomeIcons.solidPaperPlane, color: Colors.redAccent, size: 18),
                 onPressed: () {
                   Navigator.pushNamed(context, '/messages');
                 },
@@ -163,19 +169,15 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 12.0),
+            padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
                 Navigator.pushNamed(context, '/settings');
               },
               child: CircleAvatar(
                 radius: 20,
-                // backgroundImage: AssetImage(''),
-                // TODO: Must put image here coming from firebase storage
-                child: Icon(
-                  FontAwesomeIcons.solidUser,
-                  color: Colors.redAccent,
-                ),
+                backgroundColor: Colors.grey.shade200,
+                child: Icon(Icons.person, color: Colors.grey.shade600),
               ),
             ),
           ),

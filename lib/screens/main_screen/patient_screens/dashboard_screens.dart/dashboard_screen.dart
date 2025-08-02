@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hemophilia_manager/services/firestore.dart';
-import 'package:hemophilia_manager/screens/main_screen/patient_screens/dashboard_screens.dart/emergency_fab.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -341,14 +340,12 @@ class _DashboardState extends State<Dashboard> {
                       ),
                   ],
                 ),
-                SizedBox(height: 25),
+                SizedBox(height: 50), // Add extra spacing at bottom instead of FAB space
               ],
             ),
           ),
         ),
-      ),
-      floatingActionButton: EmergencyFab(),
-    );
+    ));
   }
 
   Widget _buildQuickStats() {
