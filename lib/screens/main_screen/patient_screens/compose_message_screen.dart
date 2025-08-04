@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../shared/chat_screen.dart';
+import '../../../services/data_sharing_service.dart';
+import 'care_provider_screen.dart';
 
 class ComposeMessageScreen extends StatefulWidget {
   const ComposeMessageScreen({super.key});
@@ -12,6 +13,7 @@ class ComposeMessageScreen extends StatefulWidget {
 
 class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final DataSharingService _dataSharingService = DataSharingService();
 
   List<Map<String, dynamic>> _healthcareProviders = [];
   List<Map<String, dynamic>> _filteredProviders = [];
@@ -35,25 +37,30 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
         _isLoading = true;
       });
 
-      // Get all users with role 'medical'
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('role', isEqualTo: 'medical')
-          .get();
-
-      List<Map<String, dynamic>> providers = [];
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data();
-        providers.add({'id': doc.id, 'uid': doc.id, ...data});
-      }
+      // Get only healthcare providers who have active data sharing agreements with this patient
+      final authorizedProviders = await _dataSharingService
+          .getAuthorizedHealthcareProviders();
 
       setState(() {
-        _healthcareProviders = providers;
-        _filteredProviders = providers;
+        _healthcareProviders = authorizedProviders;
+        _filteredProviders = authorizedProviders;
         _isLoading = false;
       });
+
+      // Show message if no authorized providers found
+      if (authorizedProviders.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'No healthcare providers with data sharing access found. Please set up data sharing agreements first.',
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
     } catch (e) {
-      print('Error loading healthcare providers: $e');
+      print('Error loading authorized healthcare providers: $e');
       setState(() {
         _isLoading = false;
       });
@@ -154,20 +161,54 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
           // Header
           Container(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+            child: Column(
               children: [
-                Icon(
-                  FontAwesomeIcons.userDoctor,
-                  color: Colors.redAccent,
-                  size: 20,
+                Row(
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.userDoctor,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Select Healthcare Provider',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 12),
-                Text(
-                  'Select Healthcare Provider',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                SizedBox(height: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        FontAwesomeIcons.shield,
+                        color: Colors.blue.shade600,
+                        size: 14,
+                      ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Only providers with active data sharing agreements are shown',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -210,6 +251,12 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
   }
 
   Widget _buildEmptyState() {
+    // Check if we're showing empty due to search or no authorized providers
+    bool isSearchEmpty =
+        _searchController.text.isNotEmpty &&
+        _filteredProviders.isEmpty &&
+        _healthcareProviders.isNotEmpty;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -218,18 +265,26 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: isSearchEmpty
+                  ? Colors.grey.shade100
+                  : Colors.orange.shade50,
               borderRadius: BorderRadius.circular(40),
             ),
             child: Icon(
-              FontAwesomeIcons.userDoctor,
-              color: Colors.grey.shade400,
+              isSearchEmpty
+                  ? FontAwesomeIcons.magnifyingGlass
+                  : FontAwesomeIcons.userShield,
+              color: isSearchEmpty
+                  ? Colors.grey.shade400
+                  : Colors.orange.shade400,
               size: 32,
             ),
           ),
           SizedBox(height: 24),
           Text(
-            'No healthcare providers found',
+            isSearchEmpty
+                ? 'No healthcare providers found'
+                : 'No authorized healthcare providers',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -237,10 +292,73 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
             ),
           ),
           SizedBox(height: 8),
-          Text(
-            'Try adjusting your search criteria',
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              isSearchEmpty
+                  ? 'Try adjusting your search criteria'
+                  : 'You can only message healthcare providers who have active data sharing agreements with you. Please contact your healthcare provider to set up data sharing first.',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
+            ),
           ),
+          if (!isSearchEmpty) ...[
+            SizedBox(height: 24),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              margin: EdgeInsets.symmetric(horizontal: 32),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.lightbulb,
+                    color: Colors.blue.shade600,
+                    size: 16,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Data sharing allows your healthcare provider to access your health data for better care coordination.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: _navigateToAddCareProvider,
+              icon: Icon(
+                FontAwesomeIcons.userPlus,
+                size: 16,
+                color: Colors.white,
+              ),
+              label: Text(
+                'Add Care Provider',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF6B73FF),
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -339,5 +457,16 @@ class _ComposeMessageScreenState extends State<ComposeMessageScreen> {
         onTap: () => _startChatWithProvider(provider),
       ),
     );
+  }
+
+  void _navigateToAddCareProvider() {
+    // Navigate to the care provider screen for provider search
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CareProviderScreen()),
+    ).then((_) {
+      // Refresh the providers list when returning from the care provider screen
+      _loadHealthcareProviders();
+    });
   }
 }
