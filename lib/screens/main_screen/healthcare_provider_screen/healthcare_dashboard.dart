@@ -43,21 +43,63 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         toolbarHeight: 70,
-        title: Text('RedSync PH', style: TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          'RedSync PH',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.redAccent,
         elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.redAccent.withOpacity(0.1),
-              child: IconButton(
-                icon: const Icon(FontAwesomeIcons.solidBell, color: Colors.redAccent, size: 18),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
-                },
-              ),
+            child: StreamBuilder<int>(
+              stream: FirestoreService().getUnreadNotificationCount(currentUid),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+                return Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.redAccent.withOpacity(0.1),
+                      child: IconButton(
+                        icon: const Icon(
+                          FontAwesomeIcons.solidBell,
+                          color: Colors.redAccent,
+                          size: 18,
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/notifications');
+                        },
+                      ),
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
           Padding(
@@ -82,10 +124,10 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
             children: [
               // Welcome Section
               _buildWelcomeSection(),
-              
+
               // Quick Stats
               _buildQuickStats(),
-              
+
               // Main Content Sections
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20),
@@ -96,13 +138,12 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
                     _buildSectionTitle('Your Patients'),
                     SizedBox(height: 16),
                     _buildPatientsOverview(),
-                    
+
                     SizedBox(height: 32),
                     _buildSectionTitle('Pending Requests'),
                     SizedBox(height: 16),
                     _buildPendingRequestsSection(),
 
-                    
                     SizedBox(height: 40),
                   ],
                 ),
@@ -365,10 +406,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
                 SizedBox(height: 2),
                 Text(
                   'ID: ${data['patientUid'].substring(0, 8)}...',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               ],
             ),
@@ -448,7 +486,11 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
               color: Colors.orange.shade100,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(FontAwesomeIcons.userPlus, color: Colors.orange.shade600, size: 16),
+            child: Icon(
+              FontAwesomeIcons.userPlus,
+              color: Colors.orange.shade600,
+              size: 16,
+            ),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -466,21 +508,20 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
                 SizedBox(height: 2),
                 Text(
                   'Patient ID: ${data['patientUid'].substring(0, 8)}...',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               ],
             ),
           ),
-          Icon(FontAwesomeIcons.chevronRight, color: Colors.orange.shade400, size: 14),
+          Icon(
+            FontAwesomeIcons.chevronRight,
+            color: Colors.orange.shade400,
+            size: 14,
+          ),
         ],
       ),
     );
   }
-
-  
 
   Widget _buildActivityItem({
     required IconData icon,
@@ -523,10 +564,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
                 SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               ],
             ),
@@ -564,10 +602,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
           SizedBox(height: 8),
           Text(
             subtitle,
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
             textAlign: TextAlign.center,
           ),
         ],

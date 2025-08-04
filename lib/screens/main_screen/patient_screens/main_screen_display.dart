@@ -7,6 +7,9 @@ import 'package:hemophilia_manager/screens/main_screen/patient_screens/educ_reso
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemophilia_manager/screens/registration/authentication_landing_screen.dart';
 import 'package:hemophilia_manager/auth/auth.dart';
+import 'package:hemophilia_manager/services/firestore.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/notifications_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MainScreenDisplay extends StatefulWidget {
   const MainScreenDisplay({super.key});
@@ -18,6 +21,8 @@ class MainScreenDisplay extends StatefulWidget {
 class _MainScreenDisplayState extends State<MainScreenDisplay> {
   int _currentIndex = 0;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final FirestoreService _firestoreService = FirestoreService();
+  final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   // BOTTOM NAVIGATION BAR ICONS
   final iconList = <IconData>[
@@ -27,7 +32,7 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
     FontAwesomeIcons.houseChimneyMedical,
   ];
 
-  // LIST OF DISPLAYED SCREENS (removed ChatbotScreen from here)
+  // LIST OF DISPLAYED SCREENS
   final List<Widget> _screens = [
     Dashboard(),
     EducationalResourcesScreen(),
@@ -134,14 +139,59 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.redAccent.withOpacity(0.1),
-              child: IconButton(
-                icon: const Icon(FontAwesomeIcons.solidBell, color: Colors.redAccent, size: 18),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
-                },
-              ),
+            child: StreamBuilder<int>(
+              stream: _firestoreService.getUnreadNotificationCount(uid),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+
+                return Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.redAccent.withOpacity(0.1),
+                      child: IconButton(
+                        icon: const Icon(
+                          FontAwesomeIcons.solidBell,
+                          color: Colors.redAccent,
+                          size: 18,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
           Padding(
@@ -149,7 +199,11 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
             child: CircleAvatar(
               backgroundColor: Colors.redAccent.withOpacity(0.1),
               child: IconButton(
-                icon: const Icon(FontAwesomeIcons.globe, color: Colors.redAccent, size: 18),
+                icon: const Icon(
+                  FontAwesomeIcons.globe,
+                  color: Colors.redAccent,
+                  size: 18,
+                ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/community');
                 },
@@ -161,7 +215,11 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
             child: CircleAvatar(
               backgroundColor: Colors.redAccent.withOpacity(0.1),
               child: IconButton(
-                icon: const Icon(FontAwesomeIcons.solidPaperPlane, color: Colors.redAccent, size: 18),
+                icon: const Icon(
+                  FontAwesomeIcons.solidPaperPlane,
+                  color: Colors.redAccent,
+                  size: 18,
+                ),
                 onPressed: () {
                   Navigator.pushNamed(context, '/messages');
                 },

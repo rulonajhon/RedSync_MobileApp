@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/firestore.dart';
+import '../shared/chat_screen.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
   final String patientUid;
@@ -163,7 +164,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
                   // TODO: Navigate to chat with this patient
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Opening chat with ${widget.patientData['name']}'),
+                      content: Text(
+                        'Opening chat with ${widget.patientData['name']}',
+                      ),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -196,10 +199,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
                 widget.patientData['severity'] ?? 'Not specified',
               ),
               SizedBox(width: 20),
-              _buildHeaderStat(
-                'Age',
-                _calculateAge(widget.patientData['dob']),
-              ),
+              _buildHeaderStat('Age', _calculateAge(widget.patientData['dob'])),
             ],
           ),
         ],
@@ -243,12 +243,30 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
           _buildSectionTitle('Personal Information'),
           SizedBox(height: 16),
           _buildInfoGrid([
-            _buildInfoItem('Full Name', widget.patientData['name'] ?? 'Not specified'),
-            _buildInfoItem('Email', widget.patientData['email'] ?? 'Not specified'),
-            _buildInfoItem('Gender', widget.patientData['gender'] ?? 'Not specified'),
-            _buildInfoItem('Date of Birth', _formatDate(widget.patientData['dob'])),
-            _buildInfoItem('Weight', _formatWeight(widget.patientData['weight'])),
-            _buildInfoItem('Blood Type', widget.patientData['bloodType'] ?? 'Not specified'),
+            _buildInfoItem(
+              'Full Name',
+              widget.patientData['name'] ?? 'Not specified',
+            ),
+            _buildInfoItem(
+              'Email',
+              widget.patientData['email'] ?? 'Not specified',
+            ),
+            _buildInfoItem(
+              'Gender',
+              widget.patientData['gender'] ?? 'Not specified',
+            ),
+            _buildInfoItem(
+              'Date of Birth',
+              _formatDate(widget.patientData['dob']),
+            ),
+            _buildInfoItem(
+              'Weight',
+              _formatWeight(widget.patientData['weight']),
+            ),
+            _buildInfoItem(
+              'Blood Type',
+              widget.patientData['bloodType'] ?? 'Not specified',
+            ),
           ]),
 
           SizedBox(height: 32),
@@ -256,8 +274,14 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
           _buildSectionTitle('Medical Information'),
           SizedBox(height: 16),
           _buildInfoGrid([
-            _buildInfoItem('Hemophilia Type', widget.patientData['hemophiliaType'] ?? 'Hemophilia A'),
-            _buildInfoItem('Inhibitor Status', widget.patientData['inhibitorStatus'] ?? 'Not specified'),
+            _buildInfoItem(
+              'Hemophilia Type',
+              widget.patientData['hemophiliaType'] ?? 'Hemophilia A',
+            ),
+            _buildInfoItem(
+              'Inhibitor Status',
+              widget.patientData['inhibitorStatus'] ?? 'Not specified',
+            ),
           ]),
 
           SizedBox(height: 32),
@@ -271,17 +295,28 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-                final contact = snapshot.data!.docs.first.data() as Map<String, dynamic>;
+                final contact =
+                    snapshot.data!.docs.first.data() as Map<String, dynamic>;
                 return _buildInfoGrid([
-                  _buildInfoItem('Emergency Phone', contact['contactPhone'] ?? 'Not specified'),
-                  _buildInfoItem('Contact Name', contact['contactName'] ?? 'Not specified'),
-                  _buildInfoItem('Relationship', contact['relationship'] ?? 'Not specified'),
+                  _buildInfoItem(
+                    'Emergency Phone',
+                    contact['contactPhone'] ?? 'Not specified',
+                  ),
+                  _buildInfoItem(
+                    'Contact Name',
+                    contact['contactName'] ?? 'Not specified',
+                  ),
+                  _buildInfoItem(
+                    'Relationship',
+                    contact['relationship'] ?? 'Not specified',
+                  ),
                 ]);
               }
               return _buildEmptyState(
                 icon: FontAwesomeIcons.phoneSlash,
                 title: 'No emergency contact',
-                subtitle: 'Patient hasn\'t provided emergency contact information',
+                subtitle:
+                    'Patient hasn\'t provided emergency contact information',
               );
             },
           ),
@@ -335,7 +370,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
           _buildSectionTitle('Bleeding Episodes'),
           SizedBox(height: 16),
           FutureBuilder<List<Map<String, dynamic>>>(
-            future: _firestoreService.getBleedLogs(widget.patientUid, limit: 15),
+            future: _firestoreService.getBleedLogs(
+              widget.patientUid,
+              limit: 15,
+            ),
             builder: (context, snapshot) {
               if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                 final logs = snapshot.data!;
@@ -438,7 +476,11 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
               color: Colors.purple.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(FontAwesomeIcons.syringe, color: Colors.purple, size: 16),
+            child: Icon(
+              FontAwesomeIcons.syringe,
+              color: Colors.purple,
+              size: 16,
+            ),
           ),
           SizedBox(width: 16),
           Expanded(
@@ -522,7 +564,10 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
                         ),
                       ),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: color.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -593,10 +638,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
           SizedBox(height: 8),
           Text(
             subtitle,
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
             textAlign: TextAlign.center,
           ),
         ],
@@ -634,7 +676,21 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
               subtitle: 'Start a conversation',
               onTap: () {
                 Navigator.pop(context);
-                // TODO: Navigate to chat
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatScreen(
+                      participant: {
+                        'id': widget.patientUid,
+                        'name':
+                            '${widget.patientData['firstName'] ?? 'Patient'} ${widget.patientData['lastName'] ?? ''}',
+                        'role': 'patient',
+                        'profilePicture': widget.patientData['profilePicture'],
+                      },
+                      currentUserRole: 'healthcare_provider',
+                    ),
+                  ),
+                );
               },
             ),
             _buildActionItem(
@@ -686,10 +742,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
       ),
       subtitle: Text(
         subtitle,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 13,
-        ),
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
       ),
       onTap: onTap,
     );
@@ -1081,7 +1134,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
       final birthDate = DateTime.parse(dob);
       final now = DateTime.now();
       int age = now.year - birthDate.year;
-      if (now.month < birthDate.month || (now.month == birthDate.month && now.day < birthDate.day)) {
+      if (now.month < birthDate.month ||
+          (now.month == birthDate.month && now.day < birthDate.day)) {
         age--;
       }
       return '$age years';

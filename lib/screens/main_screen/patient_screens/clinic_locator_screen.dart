@@ -25,7 +25,8 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
     {
       'name': 'Dr. Heide P. Abdurahman',
       'type': 'Adult Hematologist',
-      'address': 'Metro Davao Medical & Research Center, J.P. Laurel Ave, Bajada, Davao City',
+      'address':
+          'Metro Davao Medical & Research Center, J.P. Laurel Ave, Bajada, Davao City',
       'lat': '7.095116',
       'lng': '125.613161',
       'contact': '09099665139',
@@ -36,7 +37,8 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
     {
       'name': 'Dr. Lilia Matildo Yu',
       'type': 'Pediatric Hematologist',
-      'address': 'Medical Arts Building, front of San Pedro Hospital, Guerrero St., Davao City',
+      'address':
+          'Medical Arts Building, front of San Pedro Hospital, Guerrero St., Davao City',
       'lat': '7.078266',
       'lng': '125.614739',
       'contact': 'Call for info',
@@ -72,7 +74,8 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
     {
       'name': 'CLE Bio and Medical Supply',
       'type': 'Medical Supply',
-      'address': '#003 Chiong Bldg, Flyover, Buhangin (JP Laurel Ave), Davao City',
+      'address':
+          '#003 Chiong Bldg, Flyover, Buhangin (JP Laurel Ave), Davao City',
       'lat': '7.0968',
       'lng': '125.6152',
       'contact': '+63 82 234 5678',
@@ -194,7 +197,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
   // 📊 Smart Sorting Implementation
   void _sortLocationsByDistance() {
     clinics.sort((a, b) => a['distanceValue'].compareTo(b['distanceValue']));
-    drugOutlets.sort((a, b) => a['distanceValue'].compareTo(b['distanceValue']));
+    drugOutlets.sort(
+      (a, b) => a['distanceValue'].compareTo(b['distanceValue']),
+    );
   }
 
   // 🎨 Distance Color Coding Implementation
@@ -336,7 +341,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                     selectedType == "clinic"
                         ? FontAwesomeIcons.userDoctor
                         : FontAwesomeIcons.pills,
-                    color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                    color: selectedType == "clinic"
+                        ? Colors.redAccent
+                        : Colors.blue,
                     size: 18,
                   ),
                 ),
@@ -357,7 +364,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                         location['type'],
                         style: TextStyle(
                           fontSize: 13,
-                          color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                          color: selectedType == "clinic"
+                              ? Colors.redAccent
+                              : Colors.blue,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -368,7 +377,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getDistanceColor(location['distance']).withOpacity(0.1),
+                      color: _getDistanceColor(
+                        location['distance'],
+                      ).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -395,9 +406,13 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                     icon: Icon(FontAwesomeIcons.route, size: 16),
                     label: Text('Show Route'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                      backgroundColor: selectedType == "clinic"
+                          ? Colors.redAccent
+                          : Colors.blue,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       padding: EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
@@ -410,7 +425,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey.shade200,
                     foregroundColor: Colors.grey.shade700,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   ),
                 ),
@@ -428,11 +445,7 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: Colors.grey.shade600,
-          ),
+          Icon(icon, size: 14, color: Colors.grey.shade600),
           SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -450,9 +463,22 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
   }
 
   void _createRouteToLocation(Map<String, dynamic> location) {
-    Navigator.pop(context);
-    
-    if (_currentPosition == null) return;
+    // Close the bottom sheet/modal first
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+
+    if (_currentPosition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Current location not available. Please enable location services.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _selectedLocation = location;
@@ -475,29 +501,59 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
       );
     });
 
+    // Show success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.route, color: Colors.white),
+            SizedBox(width: 8),
+            Text('Route displayed on map'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
     _fitMapToShowBothPoints(location);
   }
 
   void _fitMapToShowBothPoints(Map<String, dynamic> location) {
     if (_mapController == null || _currentPosition == null) return;
 
-    final userLat = _currentPosition!.latitude;
-    final userLng = _currentPosition!.longitude;
-    final locLat = double.parse(location['lat']!);
-    final locLng = double.parse(location['lng']!);
+    try {
+      final userLat = _currentPosition!.latitude;
+      final userLng = _currentPosition!.longitude;
+      final locLat = double.parse(location['lat']!);
+      final locLng = double.parse(location['lng']!);
 
-    final bounds = LatLngBounds(
-      southwest: LatLng(
-        userLat < locLat ? userLat : locLat,
-        userLng < locLng ? userLng : locLng,
-      ),
-      northeast: LatLng(
-        userLat > locLat ? userLat : locLat,
-        userLng > locLng ? userLng : locLng,
-      ),
-    );
+      final bounds = LatLngBounds(
+        southwest: LatLng(
+          userLat < locLat ? userLat : locLat,
+          userLng < locLng ? userLng : locLng,
+        ),
+        northeast: LatLng(
+          userLat > locLat ? userLat : locLat,
+          userLng > locLng ? userLng : locLng,
+        ),
+      );
 
-    _mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100.0));
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLngBounds(bounds, 100.0),
+      );
+    } catch (e) {
+      print('Error fitting map to show both points: $e');
+      // Fallback: just move to the destination
+      _mapController!.animateCamera(
+        CameraUpdate.newLatLng(
+          LatLng(
+            double.parse(location['lat']!),
+            double.parse(location['lng']!),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -516,7 +572,7 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
           Container(
             margin: EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
-              color: selectedType == "clinic" 
+              color: selectedType == "clinic"
                   ? Colors.redAccent.withOpacity(0.1)
                   : Colors.blue.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
@@ -524,16 +580,20 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
             child: TextButton.icon(
               onPressed: _toggleLocationType,
               icon: Icon(
-                selectedType == "clinic" 
-                    ? FontAwesomeIcons.userDoctor 
+                selectedType == "clinic"
+                    ? FontAwesomeIcons.userDoctor
                     : FontAwesomeIcons.pills,
                 size: 14,
-                color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                color: selectedType == "clinic"
+                    ? Colors.redAccent
+                    : Colors.blue,
               ),
               label: Text(
                 selectedType == "clinic" ? 'Clinics' : 'Outlets',
                 style: TextStyle(
-                  color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                  color: selectedType == "clinic"
+                      ? Colors.redAccent
+                      : Colors.blue,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -548,7 +608,10 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: _currentPosition != null
-                  ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+                  ? LatLng(
+                      _currentPosition!.latitude,
+                      _currentPosition!.longitude,
+                    )
                   : const LatLng(7.0731, 125.6128),
               zoom: 13,
             ),
@@ -588,16 +651,18 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
               child: Row(
                 children: [
                   Icon(
-                    selectedType == "clinic" 
-                        ? FontAwesomeIcons.userDoctor 
+                    selectedType == "clinic"
+                        ? FontAwesomeIcons.userDoctor
                         : FontAwesomeIcons.pills,
-                    color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                    color: selectedType == "clinic"
+                        ? Colors.redAccent
+                        : Colors.blue,
                     size: 16,
                   ),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _getCurrentDataList().length > 0 
+                      _getCurrentDataList().length > 0
                           ? '${_getCurrentDataList().length} ${selectedType == "clinic" ? "treatment centers" : "drug outlets"} found'
                           : 'Loading locations...',
                       style: TextStyle(
@@ -613,7 +678,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                        color: selectedType == "clinic"
+                            ? Colors.redAccent
+                            : Colors.blue,
                       ),
                     ),
                 ],
@@ -652,12 +719,14 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                     },
                     icon: Icon(
                       FontAwesomeIcons.list,
-                      color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                      color: selectedType == "clinic"
+                          ? Colors.redAccent
+                          : Colors.blue,
                     ),
                   ),
                 ),
                 SizedBox(width: 12),
-                
+
                 // My Location Button
                 Container(
                   decoration: BoxDecoration(
@@ -675,13 +744,15 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                     onPressed: _getCurrentLocation,
                     icon: Icon(
                       FontAwesomeIcons.locationCrosshairs,
-                      color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                      color: selectedType == "clinic"
+                          ? Colors.redAccent
+                          : Colors.blue,
                     ),
                   ),
                 ),
-                
+
                 Spacer(),
-                
+
                 // Clear Route Button (if route exists)
                 if (_polylines.isNotEmpty)
                   Container(
@@ -728,7 +799,7 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
 
   void _showLocationsList() {
     final dataList = _getCurrentDataList();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -754,23 +825,27 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Header
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   children: [
                     Icon(
-                      selectedType == "clinic" 
-                          ? FontAwesomeIcons.userDoctor 
+                      selectedType == "clinic"
+                          ? FontAwesomeIcons.userDoctor
                           : FontAwesomeIcons.pills,
-                      color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                      color: selectedType == "clinic"
+                          ? Colors.redAccent
+                          : Colors.blue,
                       size: 20,
                     ),
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        selectedType == "clinic" ? 'Treatment Centers' : 'Drug Outlets',
+                        selectedType == "clinic"
+                            ? 'Treatment Centers'
+                            : 'Drug Outlets',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -788,9 +863,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   ],
                 ),
               ),
-              
+
               Divider(height: 1, color: Colors.grey.shade200),
-              
+
               // List
               Expanded(
                 child: ListView.builder(
@@ -837,7 +912,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   selectedType == "clinic"
                       ? FontAwesomeIcons.userDoctor
                       : FontAwesomeIcons.pills,
-                  color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                  color: selectedType == "clinic"
+                      ? Colors.redAccent
+                      : Colors.blue,
                   size: 16,
                 ),
               ),
@@ -858,7 +935,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                       item['type'],
                       style: TextStyle(
                         fontSize: 13,
-                        color: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                        color: selectedType == "clinic"
+                            ? Colors.redAccent
+                            : Colors.blue,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -904,9 +983,13 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   icon: Icon(FontAwesomeIcons.route, size: 14),
                   label: Text('Route'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: selectedType == "clinic" ? Colors.redAccent : Colors.blue,
+                    backgroundColor: selectedType == "clinic"
+                        ? Colors.redAccent
+                        : Colors.blue,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     padding: EdgeInsets.symmetric(vertical: 8),
                   ),
                 ),
@@ -919,7 +1002,9 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey.shade200,
                   foregroundColor: Colors.grey.shade700,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 ),
               ),

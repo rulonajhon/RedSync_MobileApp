@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hemophilia_manager/screens/main_screen/healthcare_provider_screen/patient_details_screen.dart';
 import '../../../services/firestore.dart';
+import '../shared/chat_screen.dart';
 
 class HealthcarePatientsList extends StatefulWidget {
   const HealthcarePatientsList({super.key});
@@ -105,18 +106,53 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.redAccent.withOpacity(0.1),
-              child: IconButton(
-                icon: const Icon(
-                  FontAwesomeIcons.solidBell,
-                  color: Colors.redAccent,
-                  size: 18,
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
-                },
-              ),
+            child: StreamBuilder<int>(
+              stream: _firestoreService.getUnreadNotificationCount(currentUid),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+                return Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.redAccent.withOpacity(0.1),
+                      child: IconButton(
+                        icon: const Icon(
+                          FontAwesomeIcons.solidBell,
+                          color: Colors.redAccent,
+                          size: 18,
+                        ),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/notifications');
+                        },
+                      ),
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            unreadCount > 99 ? '99+' : unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
           Padding(
@@ -258,13 +294,19 @@ class _HealthcarePatientsListState extends State<HealthcarePatientsList>
                               children: [
                                 IconButton(
                                   onPressed: () {
-                                    // TODO: Navigate to chat with this patient
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Opening chat with ${userData['name']}',
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatScreen(
+                                          participant: {
+                                            'id': patientUid,
+                                            'name': userData['name'],
+                                            'role': 'patient',
+                                            'profilePicture':
+                                                userData['profilePicture'],
+                                          },
+                                          currentUserRole: 'medical',
                                         ),
-                                        behavior: SnackBarBehavior.floating,
                                       ),
                                     );
                                   },

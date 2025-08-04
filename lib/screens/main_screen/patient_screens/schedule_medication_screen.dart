@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hemophilia_manager/services/firestore.dart';
 import 'package:hemophilia_manager/services/notification_service.dart';
+import 'package:hemophilia_manager/services/app_notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class ScheduleMedicationScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class ScheduleMedicationScreen extends StatefulWidget {
 class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final NotificationService _notificationService = NotificationService();
+  final AppNotificationService _appNotificationService =
+      AppNotificationService();
   String _medType = 'IV Injection';
   final List<String> _medTypes = ['IV Injection', 'Subcutaneous', 'Oral'];
   final TextEditingController _doseController = TextEditingController();
@@ -96,7 +99,7 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                 ],
               ),
             ),
-        
+
             // Form Content
             Expanded(
               child: SingleChildScrollView(
@@ -110,7 +113,7 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                       hintText: 'e.g., Factor VIII, Desmopressin',
                     ),
                     SizedBox(height: 16),
-        
+
                     _buildDropdownField(
                       value: _medType,
                       items: _medTypes,
@@ -121,7 +124,7 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                       },
                     ),
                     SizedBox(height: 16),
-        
+
                     _buildCustomInput(
                       controller: _doseController,
                       label: 'Dosage',
@@ -129,10 +132,10 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                       hintText: 'e.g., 1000 IU, 250 mg',
                     ),
                     SizedBox(height: 16),
-        
+
                     _buildTimeSelector(),
                     SizedBox(height: 16),
-        
+
                     _buildDropdownField(
                       value: _frequency,
                       items: _frequencies,
@@ -143,10 +146,10 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                       },
                     ),
                     SizedBox(height: 16),
-        
+
                     _buildNotificationToggle(),
                     SizedBox(height: 16),
-        
+
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -169,9 +172,9 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                         ),
                       ),
                     ),
-        
+
                     SizedBox(height: 32),
-        
+
                     // Set Schedule Button
                     SizedBox(
                       width: double.infinity,
@@ -205,7 +208,7 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
                         ),
                       ),
                     ),
-        
+
                     SizedBox(height: 16),
                   ],
                 ),
@@ -494,6 +497,15 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
             body:
                 'Your medication reminder for ${_medicationNameController.text.trim()} has been set up successfully!',
             payload: 'schedule_created:$scheduleId',
+          );
+
+          // Also create a notification in our AppNotificationService for the in-app notifications
+          await _appNotificationService.notifyMedicationReminder(
+            recipientId: user.uid,
+            medicationName: _medicationNameController.text.trim(),
+            dosage: _doseController.text.trim(),
+            scheduledTime:
+                DateTime.now(), // This is just for creating the notification record
           );
         } catch (e) {
           print('Error scheduling notification: $e');

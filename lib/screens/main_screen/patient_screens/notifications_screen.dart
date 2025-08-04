@@ -29,11 +29,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             .where('uid', isEqualTo: uid)
             .limit(1)
             .get();
-        
+
         if (snapshot.docs.isEmpty) {
           await _firestoreService.createNotification(
-            uid, 
-            'Welcome to RedSync PH! Your notifications will appear here.'
+            uid,
+            'Welcome to RedSync PH! Your notifications will appear here.',
           );
         }
       } catch (e) {
@@ -61,8 +61,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Delete All Notifications'),
-          content: Text('Are you sure you want to delete all notifications? This action cannot be undone.'),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Text(
+            'Are you sure you want to delete all notifications? This action cannot be undone.',
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -82,7 +86,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   );
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
               child: Text('Delete', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -135,20 +141,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   }
 
                   final docs = snapshot.data?.docs ?? [];
-                  
+
                   // Sort docs on client side by timestamp
                   docs.sort((a, b) {
                     final dataA = a.data() as Map<String, dynamic>;
                     final dataB = b.data() as Map<String, dynamic>;
                     final timestampA = dataA['timestamp'] as Timestamp?;
                     final timestampB = dataB['timestamp'] as Timestamp?;
-                    
+
                     if (timestampA != null && timestampB != null) {
                       return timestampB.compareTo(timestampA);
                     }
                     return 0;
                   });
-                  
+
                   if (docs.isEmpty) {
                     return _buildEmptyState();
                   }
@@ -176,10 +182,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           SizedBox(height: 16),
           Text(
             'Loading notifications...',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
           ),
         ],
       ),
@@ -216,10 +219,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           SizedBox(height: 8),
           Text(
             'Please try again later',
-            style: TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
           ),
           SizedBox(height: 24),
           ElevatedButton(
@@ -227,7 +227,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: Text('Retry'),
           ),
@@ -279,15 +281,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ElevatedButton(
               onPressed: () async {
                 await _firestoreService.createNotification(
-                  uid, 
-                  'Test notification created at ${DateTime.now().toString().substring(0, 16)}'
+                  uid,
+                  'Test notification created at ${DateTime.now().toString().substring(0, 16)}',
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent.withOpacity(0.1),
                 foregroundColor: Colors.redAccent,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
               child: Text('Add Test Notification'),
@@ -328,11 +332,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildNotificationItem(DocumentSnapshot doc, Map<String, dynamic> data) {
+  Widget _buildNotificationItem(
+    DocumentSnapshot doc,
+    Map<String, dynamic> data,
+  ) {
     final isRead = data['read'] ?? false;
     final text = data['text'] ?? 'No message';
     final timestamp = data['timestamp'];
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
@@ -349,6 +356,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (!isRead) {
             await _firestoreService.markNotificationAsRead(doc.id);
           }
+          // Handle navigation based on notification type
+          _handleNotificationTap(data);
         },
         borderRadius: BorderRadius.circular(12),
         child: Row(
@@ -358,7 +367,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isRead ? Colors.grey.shade200 : Colors.redAccent.withOpacity(0.1),
+                color: isRead
+                    ? Colors.grey.shade200
+                    : Colors.redAccent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
@@ -380,7 +391,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           text,
                           style: TextStyle(
                             fontSize: 15,
-                            fontWeight: isRead ? FontWeight.w500 : FontWeight.w600,
+                            fontWeight: isRead
+                                ? FontWeight.w500
+                                : FontWeight.w600,
                             color: Colors.black87,
                             height: 1.4,
                           ),
@@ -416,17 +429,165 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
+  // Handle notification navigation
+  void _handleNotificationTap(Map<String, dynamic> notificationData) {
+    final type = notificationData['type'] as String?;
+    final data = notificationData['data'] as Map<String, dynamic>?;
+
+    if (type == null || data == null) {
+      // For old notifications without type, just show a message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Notification details not available'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    switch (type) {
+      case 'post_like':
+      case 'post_comment':
+      case 'post_share':
+        _navigateToPost(data['postId'] as String?);
+        break;
+      case 'message':
+        _navigateToMessages(data['senderId'] as String?);
+        break;
+      case 'bleeding_log':
+        _navigateToBleedingLog(data);
+        break;
+      default:
+        // Unknown notification type
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unknown notification type: $type'),
+            backgroundColor: Colors.grey,
+          ),
+        );
+    }
+  }
+
+  // Navigate to specific post
+  void _navigateToPost(String? postId) {
+    if (postId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Post not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Navigate to Community Screen with the specific post
+    Navigator.of(context).pop(); // Close notifications screen
+    Navigator.pushNamed(
+      context,
+      '/community',
+      arguments: {'openPostId': postId}, // Pass the post ID as an argument
+    );
+  }
+
+  // Navigate to messages/chat with specific user
+  void _navigateToMessages(String? senderId) {
+    if (senderId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sender not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Navigate to Messages Screen with specific user
+    Navigator.of(context).pop(); // Close notifications screen
+    Navigator.pushNamed(
+      context,
+      '/messages',
+      arguments: {
+        'openChatWithUserId': senderId,
+      }, // Pass the sender ID as an argument
+    );
+  }
+
+  // Navigate to bleeding log details or patient details for healthcare providers
+  void _navigateToBleedingLog(Map<String, dynamic> data) {
+    final patientUid = data['patientUid'] as String?;
+    final patientName = data['patientName'] as String?;
+
+    if (patientUid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Patient information not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Check if this is a healthcare provider viewing patient data
+    Navigator.of(context).pop(); // Close notifications screen
+
+    // For healthcare providers, navigate to patient details screen
+    // We'll show a detailed view that includes the bleeding log information
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Bleeding Episode Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Patient: ${patientName ?? 'Unknown'}'),
+            SizedBox(height: 8),
+            Text('Date: ${data['date'] ?? 'Unknown'}'),
+            Text('Body Region: ${data['bodyRegion'] ?? 'Unknown'}'),
+            Text('Severity: ${data['severity'] ?? 'Unknown'}'),
+            SizedBox(height: 16),
+            Text(
+              'This patient has logged a bleeding episode. You can view their complete medical history by accessing their patient profile.',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              // Navigate to patient details if available
+              // This would require importing the patient details screen
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('View patient details in your patients list'),
+                  backgroundColor: Colors.blue,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: Text('View Patient', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatTime(dynamic timestamp) {
     if (timestamp is Timestamp) {
       final dt = timestamp.toDate();
       final now = DateTime.now();
       final diff = now.difference(dt);
-      
+
       if (diff.inMinutes < 1) return 'Just now';
       if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
       if (diff.inHours < 24) return '${diff.inHours}h ago';
       if (diff.inDays < 7) return '${diff.inDays}d ago';
-      
+
       return '${dt.day}/${dt.month}/${dt.year}';
     }
     return 'Unknown time';
