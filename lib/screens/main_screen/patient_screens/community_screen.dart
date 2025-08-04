@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/community_service.dart';
 
 class CommunityScreen extends StatefulWidget {
@@ -22,6 +24,42 @@ class _CommunityScreenState extends State<CommunityScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _postsStream = _communityService.getPostsStream();
+
+    // Check for navigation arguments in the next frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleNavigationArguments();
+    });
+  }
+
+  void _handleNavigationArguments() {
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    if (args != null && args.containsKey('openPostId')) {
+      final postId = args['openPostId'] as String;
+      _openSpecificPost(postId);
+    }
+  }
+
+  void _openSpecificPost(String postId) async {
+    try {
+      // Get the specific post by ID
+      final post = await _communityService.getPostById(postId);
+      if (post != null) {
+        // Navigate to the post detail screen
+        _expandPost(post);
+      } else {
+        print('Post not found: $postId');
+        // Show a snackbar or toast if post is not found
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Post not found')));
+      }
+    } catch (e) {
+      print('Error opening specific post: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading post')));
+    }
   }
 
   @override
@@ -322,7 +360,9 @@ class _CommunityScreenState extends State<CommunityScreen>
                   ),
                   child: Center(
                     child: Text(
-                      post['authorName'][0],
+                      (post['authorName'] ?? 'U').isNotEmpty
+                          ? post['authorName'][0].toUpperCase()
+                          : 'U',
                       style: TextStyle(
                         color: Colors.redAccent,
                         fontWeight: FontWeight.bold,
@@ -337,7 +377,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        post['authorName'],
+                        post['authorName'] ?? 'Unknown User',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -367,7 +407,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           ),
                           SizedBox(width: 8),
                           Text(
-                            _formatTimestamp(post['timestamp']),
+                            _formatTimestamp(_safeTimestamp(post['timestamp'])),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -945,6 +985,10 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   void _showPostOptions(Map<String, dynamic> post) {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final isOwnPost =
+        currentUser != null && post['authorId'] == currentUser.uid;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -957,6 +1001,17 @@ class _CommunityScreenState extends State<CommunityScreen>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isOwnPost) ...[
+              ListTile(
+                leading: Icon(FontAwesomeIcons.trash, color: Colors.red),
+                title: Text('Delete Post', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation(post);
+                },
+              ),
+              Divider(height: 1),
+            ],
             ListTile(
               leading: Icon(FontAwesomeIcons.bookmark, color: Colors.blue),
               title: Text('Save Post'),
@@ -970,24 +1025,204 @@ class _CommunityScreenState extends State<CommunityScreen>
                 );
               },
             ),
-            ListTile(
-              leading: Icon(FontAwesomeIcons.flag, color: Colors.orange),
-              title: Text('Report Post'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Feature coming soon'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
+            if (!isOwnPost) ...[
+              ListTile(
+                leading: Icon(FontAwesomeIcons.flag, color: Colors.orange),
+                title: Text('Report Post'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportDialog(post);
+                },
+              ),
+            ],
             SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  void _showDeleteConfirmation(Map<String, dynamic> post) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(FontAwesomeIcons.trash, color: Colors.red, size: 20),
+            ),
+            SizedBox(width: 12),
+            Text('Delete Post'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete this post? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deletePost(post);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePost(Map<String, dynamic> post) async {
+    try {
+      await _communityService.deletePost(post['id']);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Post deleted successfully'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting post: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _showReportDialog(Map<String, dynamic> post) {
+    String selectedReason = 'Inappropriate content';
+    final reasons = [
+      'Inappropriate content',
+      'Spam or misleading',
+      'Harassment or bullying',
+      'False information',
+      'Other',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                FontAwesomeIcons.flag,
+                color: Colors.orange,
+                size: 20,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Report Post'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Why are you reporting this post?'),
+            SizedBox(height: 16),
+            StatefulBuilder(
+              builder: (context, setState) => Column(
+                children: reasons
+                    .map(
+                      (reason) => RadioListTile<String>(
+                        title: Text(reason),
+                        value: reason,
+                        groupValue: selectedReason,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedReason = value!;
+                          });
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _reportPost(post, selectedReason);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Report'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _reportPost(Map<String, dynamic> post, String reason) async {
+    try {
+      await _communityService.reportPost(postId: post['id'], reason: reason);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Post reported successfully'),
+            ],
+          ),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error reporting post: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // Helper method to safely convert timestamp
+  DateTime _safeTimestamp(dynamic timestamp) {
+    if (timestamp == null) return DateTime.now();
+    if (timestamp is DateTime) return timestamp;
+    if (timestamp is Timestamp) return timestamp.toDate();
+    return DateTime.now(); // Fallback
   }
 
   String _formatTimestamp(DateTime timestamp) {
@@ -1056,7 +1291,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         radius: 24,
                         backgroundColor: Colors.redAccent.withOpacity(0.1),
                         child: Text(
-                          post['authorName'][0],
+                          (post['authorName'] ?? 'U').isNotEmpty
+                              ? post['authorName'][0].toUpperCase()
+                              : 'U',
                           style: TextStyle(
                             color: Colors.redAccent,
                             fontWeight: FontWeight.bold,
@@ -1070,7 +1307,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              post['authorName'],
+                              post['authorName'] ?? 'Unknown User',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -1099,7 +1336,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  _formatTimestamp(post['timestamp']),
+                                  _formatTimestamp(
+                                    _safeTimestamp(post['timestamp']),
+                                  ),
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Colors.grey.shade600,
@@ -1338,7 +1577,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                       backgroundColor: Colors.redAccent
                                           .withOpacity(0.1),
                                       child: Text(
-                                        comment['authorName'][0],
+                                        (comment['authorName'] ?? 'U')
+                                                .isNotEmpty
+                                            ? comment['authorName'][0]
+                                                  .toUpperCase()
+                                            : 'U',
                                         style: TextStyle(
                                           color: Colors.redAccent,
                                           fontWeight: FontWeight.bold,
@@ -1353,7 +1596,8 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            comment['authorName'],
+                                            comment['authorName'] ??
+                                                'Unknown User',
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14,
@@ -1495,6 +1739,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         );
       }
     }
+  }
+
+  // Helper method to safely convert timestamp
+  DateTime _safeTimestamp(dynamic timestamp) {
+    if (timestamp == null) return DateTime.now();
+    if (timestamp is DateTime) return timestamp;
+    if (timestamp is Timestamp) return timestamp.toDate();
+    return DateTime.now(); // Fallback
   }
 
   String _formatTimestamp(DateTime timestamp) {

@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
 import 'firestore.dart';
+import 'notification_service.dart';
 
 class CommunityService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirestoreService _firestoreService = FirestoreService();
+  final NotificationService _notificationService = NotificationService();
 
   // Get all posts for the community feed with real-time likes and comments
   Stream<List<Map<String, dynamic>>> getPostsStream() {
@@ -148,6 +150,8 @@ class CommunityService {
           print(
             'Creating like notification for user: $postAuthorId by $currentUserName',
           );
+
+          // Store notification in Firestore
           await _firestoreService.createNotificationWithData(
             uid: postAuthorId,
             text:
@@ -159,6 +163,17 @@ class CommunityService {
               'likerId': currentUser.uid,
             },
           );
+
+          // Show local notification with proper navigation
+          await _notificationService.showPostNotification(
+            id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            title: 'New Like!',
+            body:
+                '$currentUserName liked your post: "${postContent.length > 30 ? '${postContent.substring(0, 30)}...' : postContent}"',
+            postId: postId,
+            type: 'like',
+          );
+
           print('Like notification created successfully');
         }
       }
@@ -211,6 +226,8 @@ class CommunityService {
         print(
           'Creating comment notification for user: $postAuthorId by $userName',
         );
+
+        // Store notification in Firestore
         await _firestoreService.createNotificationWithData(
           uid: postAuthorId,
           text:
@@ -223,6 +240,17 @@ class CommunityService {
             'commentText': content,
           },
         );
+
+        // Show local notification with proper navigation
+        await _notificationService.showPostNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: 'New Comment!',
+          body:
+              '$userName commented on your post: "${content.length > 50 ? '${content.substring(0, 50)}...' : content}"',
+          postId: postId,
+          type: 'comment',
+        );
+
         print('Comment notification created successfully');
       }
     } catch (e) {
@@ -231,20 +259,116 @@ class CommunityService {
     }
   }
 
+  // Get a specific post by ID
+  Future<Map<String, dynamic>?> getPostById(String postId) async {
+    try {
+      final postDoc = await _firestore
+          .collection('community_posts')
+          .doc(postId)
+          .get();
+
+      if (!postDoc.exists) {
+        return null;
+      }
+
+      final postData = postDoc.data()!;
+
+      // Get real-time counts
+      final likesSnapshot = await _firestore
+          .collection('community_posts')
+          .doc(postId)
+          .collection('likes')
+          .get();
+
+      final commentsSnapshot = await _firestore
+          .collection('community_posts')
+          .doc(postId)
+          .collection('comments')
+          .get();
+
+      // Check if current user liked this post
+      final currentUser = _auth.currentUser;
+      bool isLiked = false;
+      if (currentUser != null) {
+        final userLikeDoc = await _firestore
+            .collection('community_posts')
+            .doc(postId)
+            .collection('likes')
+            .doc(currentUser.uid)
+            .get();
+        isLiked = userLikeDoc.exists;
+      }
+
+      // Get author information from users collection
+      final authorId = postData['authorId'] ?? '';
+      String authorName = postData['authorName'] ?? '';
+      String authorRole = postData['authorRole'] ?? '';
+
+      if (authorId.isNotEmpty) {
+        try {
+          final authorData = await _getUserData(authorId);
+          authorName = authorData['name'] ?? 'Unknown User';
+          authorRole = authorData['role'] ?? 'Patient';
+        } catch (e) {
+          print('Error fetching author data: $e');
+          // Fallback to stored data if fetching fails
+          authorName = postData['authorName'] ?? 'Unknown User';
+          authorRole = postData['authorRole'] ?? 'Patient';
+        }
+      }
+
+      // Handle timestamp conversion
+      DateTime? timestamp;
+      final timestampData = postData['timestamp'] ?? postData['createdAt'];
+      if (timestampData is Timestamp) {
+        timestamp = timestampData.toDate();
+      } else if (timestampData is DateTime) {
+        timestamp = timestampData;
+      } else {
+        timestamp = DateTime.now(); // Fallback
+      }
+
+      return {
+        'id': postDoc.id,
+        'title': postData['title'] ?? '',
+        'content': postData['content'] ?? '',
+        'authorId': authorId,
+        'authorName': authorName,
+        'authorRole': authorRole,
+        'timestamp': timestamp,
+        'createdAt': timestamp,
+        'likesCount': likesSnapshot.docs.length,
+        'commentsCount': commentsSnapshot.docs.length,
+        'isLiked': isLiked,
+      };
+    } catch (e) {
+      print('Error getting post by ID: $e');
+      return null;
+    }
+  }
+
   // Delete a post (only author can delete)
   Future<void> deletePost(String postId) async {
     final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      throw Exception('User not authenticated');
+    }
 
-    // Get the post to check if current user is the author
-    final postDoc = await _firestore
-        .collection('community_posts')
-        .doc(postId)
-        .get();
-    if (!postDoc.exists) return;
+    try {
+      // Get the post to check if current user is the author
+      final postDoc = await _firestore
+          .collection('community_posts')
+          .doc(postId)
+          .get();
+      if (!postDoc.exists) {
+        throw Exception('Post not found');
+      }
 
-    final postData = postDoc.data()!;
-    if (postData['authorId'] == currentUser.uid) {
+      final postData = postDoc.data()!;
+      if (postData['authorId'] != currentUser.uid) {
+        throw Exception('You can only delete your own posts');
+      }
+
       // Delete all subcollections first
       final batch = _firestore.batch();
 
@@ -268,11 +392,21 @@ class CommunityService {
         batch.delete(doc.reference);
       }
 
-      // Delete the post
+      // Delete the post itself
       batch.delete(_firestore.collection('community_posts').doc(postId));
 
       await batch.commit();
+      print('Post deleted successfully: $postId');
+    } catch (e) {
+      print('Error deleting post: $e');
+      rethrow;
     }
+  }
+
+  // Check if current user can delete a post
+  bool canDeletePost(String postAuthorId) {
+    final currentUser = _auth.currentUser;
+    return currentUser != null && currentUser.uid == postAuthorId;
   }
 
   // Report a post
@@ -337,6 +471,8 @@ class CommunityService {
       // Send notification to the post owner (if it's not their own post)
       if (postOwnerId != currentUser.uid) {
         final sharerName = currentUser.displayName ?? 'Someone';
+
+        // Store notification in Firestore
         await _firestoreService.createNotificationWithData(
           uid: postOwnerId,
           text: '$sharerName shared your post',
@@ -346,6 +482,15 @@ class CommunityService {
             'sharerName': sharerName,
             'sharerId': currentUser.uid,
           },
+        );
+
+        // Show local notification with proper navigation
+        await _notificationService.showPostNotification(
+          id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+          title: 'Post Shared!',
+          body: '$sharerName shared your post',
+          postId: postId,
+          type: 'share',
         );
       }
     } catch (e) {

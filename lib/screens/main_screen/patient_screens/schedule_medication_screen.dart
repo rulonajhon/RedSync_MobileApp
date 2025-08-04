@@ -429,7 +429,15 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
       if (_notification) {
         try {
           await _notificationService.initialize();
-          await _notificationService.requestPermissions();
+          final permissionsGranted = await _notificationService
+              .requestPermissions();
+
+          if (!permissionsGranted) {
+            _showInfoDialog(
+              'Notification Warning',
+              'Notification permissions were not granted. You may not receive medication reminders. Please enable notifications in your device settings.',
+            );
+          }
 
           // Generate a unique notification ID based on the schedule ID hash
           final notificationId = scheduleId.hashCode;
@@ -491,28 +499,38 @@ class _ScheduleMedicationScreenState extends State<ScheduleMedicationScreen> {
           await _notificationService.debugPendingNotifications();
 
           // Show a test notification to confirm notifications are working
-          await _notificationService.showImmediateNotification(
-            id: 99999,
-            title: 'Medication Schedule Created',
-            body:
-                'Your medication reminder for ${_medicationNameController.text.trim()} has been set up successfully!',
-            payload: 'schedule_created:$scheduleId',
-          );
+          try {
+            await _notificationService.showImmediateNotification(
+              id: 99999,
+              title: 'Medication Schedule Created',
+              body:
+                  'Your medication reminder for ${_medicationNameController.text.trim()} has been set up successfully!',
+              payload: 'schedule_created:$scheduleId',
+            );
+          } catch (e) {
+            print('Failed to show confirmation notification: $e');
+            // Don't fail the entire process if confirmation notification fails
+          }
 
           // Also create a notification in our AppNotificationService for the in-app notifications
-          await _appNotificationService.notifyMedicationReminder(
-            recipientId: user.uid,
-            medicationName: _medicationNameController.text.trim(),
-            dosage: _doseController.text.trim(),
-            scheduledTime:
-                DateTime.now(), // This is just for creating the notification record
-          );
+          try {
+            await _appNotificationService.notifyMedicationReminder(
+              recipientId: user.uid,
+              medicationName: _medicationNameController.text.trim(),
+              dosage: _doseController.text.trim(),
+              scheduledTime:
+                  DateTime.now(), // This is just for creating the notification record
+            );
+          } catch (e) {
+            print('Failed to create in-app notification: $e');
+            // Don't fail the entire process if in-app notification fails
+          }
         } catch (e) {
           print('Error scheduling notification: $e');
           // Don't fail the entire operation if notification fails
           _showInfoDialog(
             'Notification Warning',
-            'Your medication was scheduled successfully, but there was an issue setting up notifications. Please check your notification settings.',
+            'Your medication was scheduled successfully, but there was an issue setting up notifications. Please check your notification settings and ensure you have granted permission for notifications and exact alarms. You can try rescheduling the medication to fix this issue.',
           );
         }
       }

@@ -31,13 +31,94 @@ void main() async {
   } catch (e) {
     print('Warning: Failed to initialize Notification service: $e');
     // App can still function without notifications
+    // Don't rethrow to prevent app startup crash
   }
 
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Set up notification tap handling
+    NotificationService.setNavigationCallback(_handleNotificationTap);
+  }
+
+  void _handleNotificationTap(String payload) {
+    print('Handling notification tap with payload: $payload');
+
+    // Parse payload and navigate accordingly
+    try {
+      if (payload.startsWith('post_')) {
+        // Handle post notifications (like, comment, share)
+        final parts = payload.split(':');
+        if (parts.length >= 2) {
+          final postId = parts[1];
+          _navigateToPost(postId);
+        }
+      } else if (payload.startsWith('message:')) {
+        // Handle message notifications
+        final parts = payload.split(':');
+        if (parts.length >= 3) {
+          final senderId = parts[1];
+          final conversationId = parts[2];
+          _navigateToMessage(senderId, conversationId);
+        }
+      } else if (payload.startsWith('medication_reminder:')) {
+        // Handle medication reminder notifications
+        final parts = payload.split(':');
+        if (parts.length >= 2) {
+          final scheduleId = parts[1];
+          _navigateToMedication(scheduleId);
+        }
+      }
+    } catch (e) {
+      print('Error parsing notification payload: $e');
+    }
+  }
+
+  void _navigateToPost(String postId) {
+    print('Navigating to post: $postId');
+
+    // Navigate to community screen with specific post
+    navigatorKey.currentState?.pushNamed(
+      '/community',
+      arguments: {'openPostId': postId},
+    );
+  }
+
+  void _navigateToMessage(String senderId, String conversationId) {
+    print('Navigating to message: $senderId, $conversationId');
+
+    // Navigate to messages screen with specific conversation
+    navigatorKey.currentState?.pushNamed(
+      '/messages',
+      arguments: {
+        'openChatWithUserId': senderId,
+        'conversationId': conversationId,
+      },
+    );
+  }
+
+  void _navigateToMedication(String scheduleId) {
+    print('Navigating to medication: $scheduleId');
+
+    // Navigate to medication/dashboard screen
+    navigatorKey.currentState?.pushNamed(
+      '/medication',
+      arguments: {'scheduleId': scheduleId},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +126,7 @@ class MyApp extends StatelessWidget {
       valueListenable: themeNotifier,
       builder: (context, currentMode, _) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'RedSyncPH',
           theme: ThemeData(
             fontFamily: 'Poppins',
@@ -170,6 +252,8 @@ class _AppInitializerState extends State<AppInitializer> {
       final prefs = await SharedPreferences.getInstance();
       final onboardingComplete = prefs.getBool('onboarding_complete') ?? false;
 
+      if (!mounted) return;
+
       if (!onboardingComplete) {
         Navigator.pushReplacement(
           context,
@@ -181,6 +265,8 @@ class _AppInitializerState extends State<AppInitializer> {
       // Check login status from secure storage
       final isLoggedIn = await _secureStorage.read(key: 'isLoggedIn');
       final userRole = await _secureStorage.read(key: 'userRole');
+
+      if (!mounted) return;
 
       if (isLoggedIn == 'true' && userRole != null && userRole.isNotEmpty) {
         // User is logged in, navigate to appropriate screen
@@ -212,10 +298,12 @@ class _AppInitializerState extends State<AppInitializer> {
       }
     } catch (e) {
       // If any error occurs, default to homepage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => AuthenticationLandingScreen()),
-      );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AuthenticationLandingScreen()),
+        );
+      }
     }
   }
 

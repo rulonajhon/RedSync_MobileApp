@@ -35,6 +35,10 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadCurrentUser();
+    // Add listener to rebuild when text changes for instant color update
+    _messageController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -412,9 +416,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color:
-                            _messageController.text.trim().isNotEmpty ||
-                                _isSending
+                        color: _messageController.text.trim().isNotEmpty
                             ? Colors.redAccent
                             : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(24),

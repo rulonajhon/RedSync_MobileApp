@@ -222,150 +222,181 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
       body: _currentIndex == 2 || _currentIndex == 4 || _currentIndex == 5
           ? Container() // Empty container for chatbot, community, and messages placeholders
           : _screens[_currentIndex],
-      floatingActionButton: FloatingActionButton(
-        heroTag: "main_screen_fab",
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            builder: (context) {
-              return SafeArea(
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.85,
-                  ),
-                  padding: const EdgeInsets.all(20.0),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(24),
-                    ),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Quick Actions',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 10),
-                        _ActionTile(
-                          label: 'Log New Bleed',
-                          icon: FontAwesomeIcons.droplet,
-                          bgColor: Color(0xFFE57373),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/log_bleed');
-                          },
-                        ),
-                        SizedBox(height: 5),
-                        _ActionTile(
-                          label: 'Log New Infusion',
-                          icon: FontAwesomeIcons.syringe,
-                          bgColor: Color(0xFFBA68C8),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/log_infusion');
-                          },
-                        ),
-                        SizedBox(height: 5),
-                        _ActionTile(
-                          label: 'Schedule Medication',
-                          icon: FontAwesomeIcons.pills,
-                          bgColor: Color(0xFF64B5F6),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(
-                              context,
-                              '/schedule_medication',
-                            );
-                          },
-                        ),
-                        SizedBox(height: 5),
-                        _ActionTile(
-                          label: 'Dosage Calculator',
-                          icon: FontAwesomeIcons.calculator,
-                          bgColor: Color(0xFF81C784),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/dose_calculator');
-                          },
-                        ),
-                        SizedBox(height: 5),
-                        _ActionTile(
-                          label: 'Log History',
-                          icon: FontAwesomeIcons.clockRotateLeft,
-                          bgColor: Color(0xFFFFB74D),
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.pushNamed(context, '/log_history');
-                          },
-                        ),
-                        SizedBox(height: 5),
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.redAccent,
-                              width: 1.5,
-                            ),
-                            color: Colors.white,
-                          ),
-                          child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 8,
-                            ),
-                            leading: Icon(
-                              FontAwesomeIcons.plus,
-                              color: Colors.redAccent,
-                              size: 20,
-                            ),
-                            title: Text(
-                              'Add Care Provider',
-                              style: TextStyle(
-                                color: Colors.redAccent,
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
-                              ),
-                            ),
-                            onTap: () {
-                              Navigator.pop(context);
-                              Navigator.pushNamed(context, '/care_provider');
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
+      floatingActionButton: AnimatedSwitcher(
+        duration: Duration(milliseconds: 300),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return ScaleTransition(
+            scale: animation,
+            child: FadeTransition(opacity: animation, child: child),
           );
         },
-        backgroundColor: Colors.redAccent,
-        child: Icon(Icons.add, color: Colors.white, size: 20),
+        child:
+            _currentIndex ==
+                3 // Hide FAB when on clinic locator (index 3)
+            ? SizedBox.shrink(key: ValueKey('hidden'))
+            : FloatingActionButton(
+                key: ValueKey('visible'),
+                heroTag: "main_screen_fab",
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    builder: (context) {
+                      return SafeArea(
+                        child: Container(
+                          constraints: BoxConstraints(
+                            maxHeight:
+                                MediaQuery.of(context).size.height * 0.85,
+                          ),
+                          padding: const EdgeInsets.all(20.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(24),
+                            ),
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade400,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  'Quick Actions',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                SizedBox(height: 10),
+                                _ActionTile(
+                                  label: 'Log New Bleed',
+                                  icon: FontAwesomeIcons.droplet,
+                                  bgColor: Color(0xFFE57373),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(context, '/log_bleed');
+                                  },
+                                ),
+                                SizedBox(height: 5),
+                                _ActionTile(
+                                  label: 'Log New Infusion',
+                                  icon: FontAwesomeIcons.syringe,
+                                  bgColor: Color(0xFFBA68C8),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/log_infusion',
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 5),
+                                _ActionTile(
+                                  label: 'Schedule Medication',
+                                  icon: FontAwesomeIcons.pills,
+                                  bgColor: Color(0xFF64B5F6),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/schedule_medication',
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 5),
+                                _ActionTile(
+                                  label: 'Dosage Calculator',
+                                  icon: FontAwesomeIcons.calculator,
+                                  bgColor: Color(0xFF81C784),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/dose_calculator',
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 5),
+                                _ActionTile(
+                                  label: 'Log History',
+                                  icon: FontAwesomeIcons.clockRotateLeft,
+                                  bgColor: Color(0xFFFFB74D),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/log_history',
+                                    );
+                                  },
+                                ),
+                                SizedBox(height: 5),
+                                Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.redAccent,
+                                      width: 1.5,
+                                    ),
+                                    color: Colors.white,
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 8,
+                                    ),
+                                    leading: Icon(
+                                      FontAwesomeIcons.plus,
+                                      color: Colors.redAccent,
+                                      size: 20,
+                                    ),
+                                    title: Text(
+                                      'Add Care Provider',
+                                      style: TextStyle(
+                                        color: Colors.redAccent,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/care_provider',
+                                      );
+                                    },
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                backgroundColor: Colors.redAccent,
+                child: Icon(Icons.add, color: Colors.white, size: 20),
+              ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: _currentIndex == 3
+          ? null
+          : FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: SafeArea(
         child: Container(
           height: 80,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../services/app_notification_service.dart';
+import '../../../services/community_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -96,7 +97,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 radius: 24,
                 backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                 child: Text(
-                  _post['authorName'][0],
+                  (_post['authorName'] ?? 'U').isNotEmpty
+                      ? _post['authorName'][0].toUpperCase()
+                      : 'U',
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontWeight: FontWeight.bold,
@@ -110,7 +113,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _post['authorName'],
+                      _post['authorName'] ?? 'Unknown User',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -125,17 +128,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: _post['authorRole'] == 'Healthcare Provider'
+                            color:
+                                (_post['authorRole'] ?? 'Patient') ==
+                                    'Healthcare Provider'
                                 ? Colors.blue.shade50
                                 : Colors.green.shade50,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            _post['authorRole'],
+                            _post['authorRole'] ?? 'Patient',
                             style: TextStyle(
                               fontSize: 12,
                               color:
-                                  _post['authorRole'] == 'Healthcare Provider'
+                                  (_post['authorRole'] ?? 'Patient') ==
+                                      'Healthcare Provider'
                                   ? Colors.blue.shade700
                                   : Colors.green.shade700,
                               fontWeight: FontWeight.w500,
@@ -144,7 +150,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                         ),
                         SizedBox(width: 8),
                         Text(
-                          _formatTimestamp(_post['timestamp']),
+                          _formatTimestamp(_safeTimestamp(_post['timestamp'])),
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -566,6 +572,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   }
 
   void _showPostOptions() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final isOwnPost =
+        currentUser != null && _post['authorId'] == currentUser.uid;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -578,6 +588,17 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (isOwnPost) ...[
+              ListTile(
+                leading: Icon(FontAwesomeIcons.trash, color: Colors.red),
+                title: Text('Delete Post', style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmation();
+                },
+              ),
+              Divider(height: 1),
+            ],
             ListTile(
               leading: Icon(FontAwesomeIcons.bookmark, color: Colors.blue),
               title: Text('Save Post'),
@@ -591,24 +612,110 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(FontAwesomeIcons.flag, color: Colors.orange),
-              title: Text('Report Post'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Post reported! (Feature coming soon)'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-            ),
+            if (!isOwnPost) ...[
+              ListTile(
+                leading: Icon(FontAwesomeIcons.flag, color: Colors.orange),
+                title: Text('Report Post'),
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Post reported! (Feature coming soon)'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+              ),
+            ],
             SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(FontAwesomeIcons.trash, color: Colors.red, size: 20),
+            ),
+            SizedBox(width: 12),
+            Text('Delete Post'),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to delete this post? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deletePost();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePost() async {
+    try {
+      // We need to import and use the community service
+      final communityService = CommunityService();
+      await communityService.deletePost(_post['id']);
+
+      // Navigate back to community screen
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Post deleted successfully'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting post: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  // Helper method to safely convert timestamp
+  DateTime _safeTimestamp(dynamic timestamp) {
+    if (timestamp == null) return DateTime.now();
+    if (timestamp is DateTime) return timestamp;
+    if (timestamp is Timestamp) return timestamp.toDate();
+    return DateTime.now(); // Fallback
   }
 
   String _formatTimestamp(DateTime timestamp) {
