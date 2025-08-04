@@ -3,7 +3,7 @@ import 'package:hemophilia_manager/auth/auth.dart';
 import 'package:hemophilia_manager/services/firestore.dart';
 import 'package:hemophilia_manager/routes/routes.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_display.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_hud.dart';
 import 'package:hemophilia_manager/screens/main_screen/healthcare_provider_screen/healthcare_main_screen.dart';
 
 class LoginPage extends StatefulWidget {

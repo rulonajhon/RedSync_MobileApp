@@ -169,7 +169,7 @@ class _CommunityScreenState extends State<CommunityScreen>
   Widget _buildEmptyFeedState() {
     return SingleChildScrollView(
       physics: AlwaysScrollableScrollPhysics(),
-      child: Container(
+      child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.6,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

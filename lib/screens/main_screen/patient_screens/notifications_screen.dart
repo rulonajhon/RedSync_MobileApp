@@ -18,28 +18,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    _addTestNotificationIfNeeded();
-  }
-
-  Future<void> _addTestNotificationIfNeeded() async {
-    if (uid.isNotEmpty) {
-      try {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('notifications')
-            .where('uid', isEqualTo: uid)
-            .limit(1)
-            .get();
-
-        if (snapshot.docs.isEmpty) {
-          await _firestoreService.createNotification(
-            uid,
-            'Welcome to RedSync PH! Your notifications will appear here.',
-          );
-        }
-      } catch (e) {
-        print('Error checking notifications: $e');
-      }
-    }
   }
 
   Future<void> _markAllAsRead() async {
@@ -276,25 +254,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () async {
-                await _firestoreService.createNotification(
-                  uid,
-                  'Test notification created at ${DateTime.now().toString().substring(0, 16)}',
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent.withOpacity(0.1),
-                foregroundColor: Colors.redAccent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: Text('Add Test Notification'),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../services/firestore.dart';
 import '../shared/chat_screen.dart';
 
@@ -50,7 +51,6 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
         actions: [
           IconButton(
             onPressed: () {
-              // TODO: Add patient actions menu
               _showPatientActionsMenu();
             },
             icon: Icon(FontAwesomeIcons.ellipsisVertical, size: 18),
@@ -161,13 +161,19 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
               ),
               IconButton(
                 onPressed: () {
-                  // TODO: Navigate to chat with this patient
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Opening chat with ${widget.patientData['name']}',
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatScreen(
+                        participant: {
+                          'id': widget.patientUid,
+                          'name': widget.patientData['name'],
+                          'role': 'patient',
+                          'profilePicture':
+                              widget.patientData['profilePicture'],
+                        },
+                        currentUserRole: 'medical',
                       ),
-                      behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
@@ -194,12 +200,12 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
                 widget.patientData['hemophiliaType'] ?? 'Hemophilia A',
               ),
               SizedBox(width: 20),
-              _buildHeaderStat(
-                'Severity',
-                widget.patientData['severity'] ?? 'Not specified',
-              ),
-              SizedBox(width: 20),
               _buildHeaderStat('Age', _calculateAge(widget.patientData['dob'])),
+              SizedBox(width: 20),
+              _buildHeaderStat(
+                'Blood Type',
+                widget.patientData['bloodType'] ?? 'Not specified',
+              ),
             ],
           ),
         ],
@@ -682,12 +688,11 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
                     builder: (context) => ChatScreen(
                       participant: {
                         'id': widget.patientUid,
-                        'name':
-                            '${widget.patientData['firstName'] ?? 'Patient'} ${widget.patientData['lastName'] ?? ''}',
+                        'name': widget.patientData['name'],
                         'role': 'patient',
                         'profilePicture': widget.patientData['profilePicture'],
                       },
-                      currentUserRole: 'healthcare_provider',
+                      currentUserRole: 'medical',
                     ),
                   ),
                 );
@@ -763,9 +768,9 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
             child: Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Implement remove access
+              await _removeDataAccess();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text('Remove', style: TextStyle(color: Colors.white)),
@@ -773,6 +778,49 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen>
         ],
       ),
     );
+  }
+
+  Future<void> _removeDataAccess() async {
+    try {
+      // Find and delete the data sharing relationship
+      final dataSharingQuery = await FirebaseFirestore.instance
+          .collection('data_sharing')
+          .where('patientUid', isEqualTo: widget.patientUid)
+          .where(
+            'providerUid',
+            isEqualTo: FirebaseAuth.instance.currentUser?.uid,
+          )
+          .get();
+
+      for (var doc in dataSharingQuery.docs) {
+        await doc.reference.delete();
+      }
+
+      // Send notification to patient
+      await _firestoreService.createNotification(
+        widget.patientUid,
+        'Your healthcare provider has revoked data sharing access.',
+      );
+
+      // Show success message and navigate back
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Data access removed successfully'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      Navigator.of(context).pop(); // Go back to patients list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error removing access: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _showBleedLogDetails(Map<String, dynamic> log) {

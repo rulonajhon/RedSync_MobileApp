@@ -10,7 +10,7 @@ import 'package:hemophilia_manager/screens/main_screen/patient_screens/dosage_ca
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/log_bleed.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/log_history_screen.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/log_infusion.dart';
-import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_display.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_hud.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/notifications_screen.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/schedule_medication_screen.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/settings_screens/main_settings.dart';

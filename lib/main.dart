@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hemophilia_manager/firebase_options.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_display.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_screen_hud.dart';
 import 'package:hemophilia_manager/screens/main_screen/healthcare_provider_screen/healthcare_main_screen.dart';
 import 'package:hemophilia_manager/services/openai_service.dart';
 import 'package:hemophilia_manager/services/notification_service.dart';

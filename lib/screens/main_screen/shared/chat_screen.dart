@@ -159,64 +159,114 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
+        toolbarHeight: 70,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey.shade100, width: 1),
+            ),
+          ),
+        ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            FontAwesomeIcons.arrowLeft,
+            color: Colors.redAccent,
+            size: 18,
+          ),
+        ),
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.redAccent.withOpacity(0.2),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(22),
+              ),
               child: Icon(
                 widget.participant['role'] == 'medical'
                     ? FontAwesomeIcons.userDoctor
                     : FontAwesomeIcons.user,
                 color: Colors.redAccent,
-                size: 18,
+                size: 20,
               ),
             ),
             SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     widget.participant['name'] ?? 'Unknown User',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade800,
+                    ),
                   ),
+                  SizedBox(height: 2),
                   Text(
                     widget.participant['role'] == 'medical'
                         ? 'Healthcare Provider'
                         : 'Patient',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 1,
         actions: [
-          IconButton(
-            icon: Icon(FontAwesomeIcons.phone, size: 18),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Voice call feature coming soon'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
+          Container(
+            margin: EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: IconButton(
+              icon: Icon(FontAwesomeIcons.phone, size: 16),
+              color: Colors.grey.shade600,
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Voice call feature coming soon'),
+                    backgroundColor: Colors.grey.shade600,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
           ),
-          IconButton(
-            icon: Icon(FontAwesomeIcons.video, size: 18),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Video call feature coming soon'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
+          Container(
+            margin: EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: IconButton(
+              icon: Icon(FontAwesomeIcons.video, size: 16),
+              color: Colors.grey.shade600,
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Video call feature coming soon'),
+                    backgroundColor: Colors.grey.shade600,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -229,9 +279,22 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircularProgressIndicator(color: Colors.redAccent),
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.redAccent,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
                         SizedBox(height: 16),
-                        Text('Loading messages...'),
+                        Text(
+                          'Loading messages...',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -240,110 +303,143 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          FontAwesomeIcons.comments,
-                          size: 64,
-                          color: Colors.grey[300],
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                          child: Icon(
+                            FontAwesomeIcons.comments,
+                            size: 32,
+                            color: Colors.grey.shade400,
+                          ),
                         ),
-                        SizedBox(height: 16),
+                        SizedBox(height: 24),
                         Text(
                           'No messages yet',
                           style: TextStyle(
                             fontSize: 18,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade700,
                           ),
                         ),
                         SizedBox(height: 8),
-                        Text(
-                          'Start a conversation with ${widget.participant['name']}',
-                          style: TextStyle(color: Colors.grey[500]),
-                          textAlign: TextAlign.center,
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 48),
+                          child: Text(
+                            'Start a conversation with ${widget.participant['name']}',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 16,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
                       final isCurrentUser =
                           message['senderId'] == _currentUserId;
+                      final showAvatar =
+                          index == _messages.length - 1 ||
+                          _messages[index + 1]['senderId'] !=
+                              message['senderId'];
 
-                      return _buildMessageBubble(message, isCurrentUser);
+                      return _buildMessageBubble(
+                        message,
+                        isCurrentUser,
+                        showAvatar,
+                      );
                     },
                   ),
           ),
 
           // Message Input
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: Offset(0, -2),
+          SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade100, width: 1),
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: 'Type a message...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide(color: Colors.redAccent),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _messageController,
+                          decoration: InputDecoration(
+                            hintText: 'Type a message...',
+                            hintStyle: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 16,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                          maxLines: null,
+                          textCapitalization: TextCapitalization.sentences,
+                          onSubmitted: (_) => _sendMessage(),
+                          style: TextStyle(fontSize: 16),
+                        ),
                       ),
                     ),
-                    maxLines: null,
-                    textCapitalization: TextCapitalization.sentences,
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
+                    SizedBox(width: 12),
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color:
+                            _messageController.text.trim().isNotEmpty ||
+                                _isSending
+                            ? Colors.redAccent
+                            : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: IconButton(
+                        onPressed: _isSending ? null : _sendMessage,
+                        icon: _isSending
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(
+                                FontAwesomeIcons.paperPlane,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    onPressed: _isSending ? null : _sendMessage,
-                    icon: _isSending
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Icon(
-                            FontAwesomeIcons.paperPlane,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -351,75 +447,109 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message, bool isCurrentUser) {
+  Widget _buildMessageBubble(
+    Map<String, dynamic> message,
+    bool isCurrentUser,
+    bool showAvatar,
+  ) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: showAvatar ? 16 : 4),
       child: Row(
         mainAxisAlignment: isCurrentUser
             ? MainAxisAlignment.end
             : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isCurrentUser) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey[300],
-              child: Icon(
-                FontAwesomeIcons.user,
-                size: 14,
-                color: Colors.grey[600],
-              ),
-            ),
+            showAvatar
+                ? Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      FontAwesomeIcons.user,
+                      size: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  )
+                : SizedBox(width: 32),
             SizedBox(width: 8),
           ],
           Flexible(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isCurrentUser ? Colors.redAccent : Colors.grey[200],
-                borderRadius: BorderRadius.circular(18).copyWith(
-                  bottomLeft: isCurrentUser
-                      ? Radius.circular(18)
-                      : Radius.circular(4),
-                  bottomRight: isCurrentUser
-                      ? Radius.circular(4)
-                      : Radius.circular(18),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+            child: Column(
+              crossAxisAlignment: isCurrentUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isCurrentUser ? Colors.redAccent : Colors.white,
+                    borderRadius: BorderRadius.circular(20).copyWith(
+                      bottomLeft: isCurrentUser
+                          ? Radius.circular(20)
+                          : Radius.circular(4),
+                      bottomRight: isCurrentUser
+                          ? Radius.circular(4)
+                          : Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 2,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Text(
                     message['message'] ?? '',
                     style: TextStyle(
-                      color: isCurrentUser ? Colors.white : Colors.black87,
+                      color: isCurrentUser
+                          ? Colors.white
+                          : Colors.grey.shade800,
                       fontSize: 16,
+                      height: 1.3,
                     ),
                   ),
+                ),
+                if (showAvatar) ...[
                   SizedBox(height: 4),
-                  Text(
-                    _formatMessageTime(message['timestamp']),
-                    style: TextStyle(
-                      color: isCurrentUser
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.grey[600],
-                      fontSize: 12,
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      _formatMessageTime(message['timestamp']),
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
           if (isCurrentUser) ...[
             SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.redAccent.withOpacity(0.2),
-              child: Icon(
-                FontAwesomeIcons.user,
-                size: 14,
-                color: Colors.redAccent,
-              ),
-            ),
+            showAvatar
+                ? Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Icon(
+                      FontAwesomeIcons.user,
+                      size: 16,
+                      color: Colors.redAccent,
+                    ),
+                  )
+                : SizedBox(width: 32),
           ],
         ],
       ),
@@ -452,3 +582,5 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 }
+
+// TODO: Add a delete functionality to remove messages

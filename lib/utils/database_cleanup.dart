@@ -61,7 +61,7 @@ class DatabaseCleanup {
       print('Cleanup completed. Deleted $deletedCount dummy posts.');
     } catch (e) {
       print('Error during cleanup: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -85,7 +85,7 @@ class DatabaseCleanup {
       print('Complete cleanup finished. Deleted $deletedCount posts.');
     } catch (e) {
       print('Error during complete cleanup: $e');
-      throw e;
+      rethrow;
     }
   }
 

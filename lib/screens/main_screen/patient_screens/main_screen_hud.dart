@@ -25,19 +25,24 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
   final FirestoreService _firestoreService = FirestoreService();
   final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  // BOTTOM NAVIGATION BAR ICONS
+  // BOTTOM NAVIGATION BAR ICONS - Now 6 icons
   final iconList = <IconData>[
     FontAwesomeIcons.house,
     FontAwesomeIcons.book,
     FontAwesomeIcons.robot,
     FontAwesomeIcons.houseChimneyMedical,
+    FontAwesomeIcons.globe,
+    FontAwesomeIcons.solidPaperPlane,
   ];
 
-  // LIST OF DISPLAYED SCREENS
+  // LIST OF DISPLAYED SCREENS - Updated for separate community screen
   final List<Widget> _screens = [
-    Dashboard(),
-    EducationalResourcesScreen(),
-    ClinicLocatorScreen(), // Moved clinic locator to index 2
+    Dashboard(), // Index 0
+    EducationalResourcesScreen(), // Index 1
+    Container(), // Index 2 - Placeholder for chatbot (opens separately)
+    ClinicLocatorScreen(), // Index 3
+    Container(), // Index 4 - Placeholder for community (opens separately)
+    Container(), // Index 5 - Placeholder for messages (opens separately)
   ];
 
   Future<void> _logout() async {
@@ -114,14 +119,19 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
     if (index == 2) {
       // Chatbot icon - open in separate screen
       Navigator.pushNamed(context, '/chatbot');
+    } else if (index == 4) {
+      // Community icon - open in separate screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const CommunityScreen()),
+      );
+    } else if (index == 5) {
+      // Messages icon - open in separate screen
+      Navigator.pushNamed(context, '/messages');
     } else {
-      // For other tabs, handle normally but adjust index for removed chatbot
-      int adjustedIndex = index;
-      if (index > 2) {
-        adjustedIndex = index - 1; // Adjust for removed chatbot screen
-      }
+      // For other tabs, handle normally
       setState(() {
-        _currentIndex = adjustedIndex;
+        _currentIndex = index;
       });
     }
   }
@@ -196,43 +206,6 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.redAccent.withOpacity(0.1),
-              child: IconButton(
-                icon: const Icon(
-                  FontAwesomeIcons.globe,
-                  color: Colors.redAccent,
-                  size: 18,
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CommunityScreen(),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: CircleAvatar(
-              backgroundColor: Colors.redAccent.withOpacity(0.1),
-              child: IconButton(
-                icon: const Icon(
-                  FontAwesomeIcons.solidPaperPlane,
-                  color: Colors.redAccent,
-                  size: 18,
-                ),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/messages');
-                },
-              ),
-            ),
-          ),
-          Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
@@ -247,9 +220,11 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
-      floatingActionButton: FloatingActionButton.large(
-        heroTag: "main_screen_fab", // Unique tag to avoid conflicts
+      body: _currentIndex == 2 || _currentIndex == 4 || _currentIndex == 5
+          ? Container() // Empty container for chatbot, community, and messages placeholders
+          : _screens[_currentIndex],
+      floatingActionButton: FloatingActionButton(
+        heroTag: "main_screen_fab",
         onPressed: () {
           showModalBottomSheet(
             context: context,
@@ -389,24 +364,60 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
           );
         },
         backgroundColor: Colors.redAccent,
-        shape: const CircleBorder(),
-        child: Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: Colors.white, size: 20),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: AnimatedBottomNavigationBar(
-        icons: iconList,
-        activeIndex: _currentIndex >= 2
-            ? _currentIndex + 1
-            : _currentIndex, // Adjust active index display
-        gapLocation: GapLocation.center,
-        notchSmoothness: NotchSmoothness.softEdge,
-        height: 60,
-        leftCornerRadius: 16,
-        rightCornerRadius: 16,
-        backgroundColor: Colors.white,
-        activeColor: Colors.redAccent,
-        inactiveColor: Colors.blueGrey,
-        onTap: _onBottomNavTap, // Use custom tap handler
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: Container(
+        height: 80,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 1,
+              blurRadius: 8,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(iconList.length, (index) {
+            final isActive = _currentIndex == index;
+            return GestureDetector(
+              onTap: () => _onBottomNavTap(index),
+              child: Container(
+                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? Colors.redAccent.withOpacity(0.1)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      iconList[index],
+                      color: isActive ? Colors.redAccent : Colors.grey.shade600,
+                      size: 20,
+                    ),
+                    SizedBox(height: 4),
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isActive ? Colors.redAccent : Colors.transparent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
