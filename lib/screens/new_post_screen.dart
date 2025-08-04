@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/community_service.dart';
 
 class NewPostScreen extends StatefulWidget {
-  const NewPostScreen({Key? key}) : super(key: key);
+  const NewPostScreen({super.key});
 
   @override
   _NewPostScreenState createState() => _NewPostScreenState();

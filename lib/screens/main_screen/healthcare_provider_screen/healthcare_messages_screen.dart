@@ -297,7 +297,7 @@ class _HealthcareMessagesScreenState extends State<HealthcareMessagesScreen> {
                     onRefresh: _loadMessages,
                     child: SingleChildScrollView(
                       physics: AlwaysScrollableScrollPhysics(),
-                      child: Container(
+                      child: SizedBox(
                         height: MediaQuery.of(context).size.height * 0.6,
                         child: _buildEmptyState(),
                       ),

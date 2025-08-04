@@ -5,7 +5,7 @@ import '../services/community_service.dart';
 class PostDetailScreen extends StatefulWidget {
   final Map<String, dynamic> post;
 
-  const PostDetailScreen({Key? key, required this.post}) : super(key: key);
+  const PostDetailScreen({super.key, required this.post});
 
   @override
   _PostDetailScreenState createState() => _PostDetailScreenState();

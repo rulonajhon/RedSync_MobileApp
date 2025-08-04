@@ -1,0 +1,1393 @@
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../services/community_service.dart';
+
+class CommunityScreen extends StatefulWidget {
+  const CommunityScreen({super.key});
+
+  @override
+  State<CommunityScreen> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final CommunityService _communityService = CommunityService();
+
+  // Stream for real-time posts
+  Stream<List<Map<String, dynamic>>>? _postsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _postsStream = _communityService.getPostsStream();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text('Community', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.redAccent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              // TODO: Implement search functionality
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Search feature coming soon'),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+            icon: Icon(FontAwesomeIcons.magnifyingGlass, size: 18),
+          ),
+          IconButton(
+            onPressed: _showCreatePostDialog,
+            icon: Icon(FontAwesomeIcons.plus, size: 18),
+          ),
+          SizedBox(width: 8),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.redAccent,
+          labelColor: Colors.redAccent,
+          unselectedLabelColor: Colors.grey.shade600,
+          indicatorWeight: 3,
+          labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          tabs: [
+            Tab(text: 'Feed'),
+            Tab(text: 'Groups'),
+            Tab(text: 'Events'),
+          ],
+        ),
+      ),
+      body: SafeArea(
+        child: TabBarView(
+          controller: _tabController,
+          children: [_buildFeedTab(), _buildGroupsTab(), _buildEventsTab()],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedTab() {
+    return RefreshIndicator(
+      onRefresh: _refreshFeed,
+      child: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _postsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading community posts...',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    FontAwesomeIcons.triangleExclamation,
+                    size: 48,
+                    color: Colors.orange,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Error loading posts',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Please check your connection and try again',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _postsStream = _communityService.getPostsStream();
+                      });
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final posts = snapshot.data ?? [];
+
+          if (posts.isEmpty) {
+            return _buildEmptyFeedState();
+          }
+
+          return ListView.builder(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
+              return _buildPostItemWithStreams(posts[index]);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyFeedState() {
+    return SingleChildScrollView(
+      physics: AlwaysScrollableScrollPhysics(),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(FontAwesomeIcons.users, size: 64, color: Colors.grey.shade400),
+            SizedBox(height: 24),
+            Text(
+              'Welcome to the Community Feed',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Connect with other patients, share your experiences, and support each other on your hemophilia journey.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _showCreatePostDialog,
+              icon: Icon(FontAwesomeIcons.plus, size: 16),
+              label: Text('Create Your First Post'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Pull down to refresh',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPostItemWithStreams(Map<String, dynamic> post) {
+    final postId = post['id'] as String;
+
+    return GestureDetector(
+      onTap: () => _expandPost(post),
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Post Header
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.redAccent.withOpacity(0.1),
+                  child: Text(
+                    post['authorName'][0],
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post['authorName'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              post['authorRole'],
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.blue.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            _formatTimestamp(post['timestamp']),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _showPostOptions(post),
+                  icon: Icon(FontAwesomeIcons.ellipsis, size: 16),
+                  color: Colors.grey.shade600,
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12),
+
+            // Post Content
+            Text(
+              post['content'],
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+            ),
+
+            SizedBox(height: 16),
+
+            // Real-time engagement stats using StreamBuilder
+            StreamBuilder<Map<String, dynamic>>(
+              stream: _communityService.getLikesStream(postId),
+              builder: (context, likesSnapshot) {
+                return StreamBuilder<int>(
+                  stream: _communityService.getCommentsCountStream(postId),
+                  builder: (context, commentsSnapshot) {
+                    final likesData =
+                        likesSnapshot.data ?? {'count': 0, 'isLiked': false};
+                    final likesCount = likesData['count'] as int;
+                    final isLiked = likesData['isLiked'] as bool;
+                    final commentsCount = commentsSnapshot.data ?? 0;
+
+                    return Column(
+                      children: [
+                        // Engagement stats
+                        Row(
+                          children: [
+                            if (likesCount > 0) ...[
+                              Icon(
+                                FontAwesomeIcons.solidHeart,
+                                size: 14,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                '$likesCount',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                            Spacer(),
+                            if (commentsCount > 0) ...[
+                              Text(
+                                '$commentsCount comments',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+
+                        Divider(
+                          height: 24,
+                          thickness: 1,
+                          color: Colors.grey.shade300,
+                        ),
+
+                        // Post Actions
+                        Row(
+                          children: [
+                            _buildActionButton(
+                              icon: isLiked
+                                  ? FontAwesomeIcons.solidHeart
+                                  : FontAwesomeIcons.heart,
+                              label: 'Like',
+                              color: isLiked
+                                  ? Colors.red
+                                  : Colors.grey.shade600,
+                              onTap: () => _toggleLike(postId),
+                            ),
+                            Expanded(child: SizedBox()),
+                            _buildActionButton(
+                              icon: FontAwesomeIcons.comment,
+                              label: 'Comment',
+                              color: Colors.grey.shade600,
+                              onTap: () => _showCommentDialog(post),
+                            ),
+                            Expanded(child: SizedBox()),
+                            _buildActionButton(
+                              icon: FontAwesomeIcons.share,
+                              label: 'Share',
+                              color: Colors.grey.shade600,
+                              onTap: () => _sharePost(postId),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupsTab() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _buildComingSoonCard(
+              icon: FontAwesomeIcons.users,
+              title: 'Support Groups',
+              subtitle:
+                  'Connect with others in your area or condition-specific groups',
+            ),
+            SizedBox(height: 16),
+            _buildComingSoonCard(
+              icon: FontAwesomeIcons.commentDots,
+              title: 'Discussion Forums',
+              subtitle: 'Join topic-based discussions and ask questions',
+            ),
+            SizedBox(height: 16),
+            _buildComingSoonCard(
+              icon: FontAwesomeIcons.userDoctor,
+              title: 'Expert Q&A',
+              subtitle: 'Get answers from healthcare professionals',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEventsTab() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _buildComingSoonCard(
+              icon: FontAwesomeIcons.calendar,
+              title: 'Community Events',
+              subtitle: 'Local meetups, conferences, and support events',
+            ),
+            SizedBox(height: 16),
+            _buildComingSoonCard(
+              icon: FontAwesomeIcons.chalkboardUser,
+              title: 'Educational Webinars',
+              subtitle: 'Learn from experts about hemophilia management',
+            ),
+            SizedBox(height: 16),
+            _buildComingSoonCard(
+              icon: FontAwesomeIcons.handHoldingHeart,
+              title: 'Fundraising Events',
+              subtitle: 'Participate in awareness and fundraising activities',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComingSoonCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Icon(icon, color: Colors.redAccent, size: 24),
+          ),
+          SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 16),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Coming Soon',
+              style: TextStyle(
+                color: Colors.orange.shade700,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _expandPost(Map<String, dynamic> post) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            PostDetailScreen(post: post, communityService: _communityService),
+      ),
+    );
+  }
+
+  void _showCommentDialog(Map<String, dynamic> post) {
+    final TextEditingController commentController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          margin: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Add Comment',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: commentController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'Write a comment...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.redAccent),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel'),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (commentController.text.trim().isNotEmpty) {
+                            try {
+                              await _communityService.addComment(
+                                postId: post['id'],
+                                content: commentController.text.trim(),
+                              );
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Comment added!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 1),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error adding comment: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text('Post'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _toggleLike(String postId) async {
+    try {
+      await _communityService.toggleLike(postId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating like: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _sharePost(String postId) async {
+    try {
+      await _communityService.sharePost(postId: postId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Post shared!'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error sharing post: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshFeed() async {
+    // Refresh the stream to get latest data
+    setState(() {
+      _postsStream = _communityService.getPostsStream();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Feed refreshed'),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _showCreatePostDialog() {
+    final TextEditingController postController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          margin: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Create Post',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: postController,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: 'Share your thoughts with the community...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.redAccent),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Cancel'),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          if (postController.text.trim().isNotEmpty) {
+                            try {
+                              await _communityService.createPost(
+                                content: postController.text.trim(),
+                              );
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Post created successfully!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error creating post: $e'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text('Post'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPostOptions(Map<String, dynamic> post) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(FontAwesomeIcons.bookmark, color: Colors.blue),
+              title: Text('Save Post'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Feature coming soon'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(FontAwesomeIcons.flag, color: Colors.orange),
+              title: Text('Report Post'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Feature coming soon'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+}
+
+// PostDetailScreen - Expanded view like Facebook
+class PostDetailScreen extends StatefulWidget {
+  final Map<String, dynamic> post;
+  final CommunityService communityService;
+
+  const PostDetailScreen({
+    super.key,
+    required this.post,
+    required this.communityService,
+  });
+
+  @override
+  State<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends State<PostDetailScreen> {
+  late Map<String, dynamic> post;
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    post = Map<String, dynamic>.from(widget.post);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text('Post'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.redAccent,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Post Header
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.redAccent.withOpacity(0.1),
+                        child: Text(
+                          post['authorName'][0],
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              post['authorName'],
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    post['authorRole'],
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  _formatTimestamp(post['timestamp']),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Post Content
+                  Text(
+                    post['content'],
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  SizedBox(height: 20),
+
+                  // Engagement stats using real-time streams
+                  StreamBuilder<Map<String, dynamic>>(
+                    stream: widget.communityService.getLikesStream(post['id']),
+                    builder: (context, likesSnapshot) {
+                      return StreamBuilder<int>(
+                        stream: widget.communityService.getCommentsCountStream(
+                          post['id'],
+                        ),
+                        builder: (context, commentsSnapshot) {
+                          final likesData =
+                              likesSnapshot.data ??
+                              {'count': 0, 'isLiked': false};
+                          final likesCount = likesData['count'] as int;
+                          final commentsCount = commentsSnapshot.data ?? 0;
+
+                          return Container(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(color: Colors.grey.shade300),
+                                bottom: BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                if (likesCount > 0) ...[
+                                  Icon(
+                                    FontAwesomeIcons.solidHeart,
+                                    size: 16,
+                                    color: Colors.red,
+                                  ),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    '$likesCount likes',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                                Spacer(),
+                                if (commentsCount > 0) ...[
+                                  Text(
+                                    '$commentsCount comments',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+
+                  // Action buttons with real-time like status
+                  StreamBuilder<Map<String, dynamic>>(
+                    stream: widget.communityService.getLikesStream(post['id']),
+                    builder: (context, likesSnapshot) {
+                      final likesData =
+                          likesSnapshot.data ?? {'count': 0, 'isLiked': false};
+                      final isLiked = likesData['isLiked'] as bool;
+
+                      return Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextButton.icon(
+                                onPressed: _toggleLike,
+                                icon: Icon(
+                                  isLiked
+                                      ? FontAwesomeIcons.solidHeart
+                                      : FontAwesomeIcons.heart,
+                                  size: 18,
+                                  color: isLiked
+                                      ? Colors.red
+                                      : Colors.grey.shade600,
+                                ),
+                                label: Text(
+                                  'Like',
+                                  style: TextStyle(
+                                    color: isLiked
+                                        ? Colors.red
+                                        : Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: TextButton.icon(
+                                onPressed: () {
+                                  // Focus on comment input
+                                  FocusScope.of(
+                                    context,
+                                  ).requestFocus(FocusNode());
+                                },
+                                icon: Icon(
+                                  FontAwesomeIcons.comment,
+                                  size: 18,
+                                  color: Colors.grey.shade600,
+                                ),
+                                label: Text(
+                                  'Comment',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: TextButton.icon(
+                                onPressed: _sharePost,
+                                icon: Icon(
+                                  FontAwesomeIcons.share,
+                                  size: 18,
+                                  color: Colors.grey.shade600,
+                                ),
+                                label: Text(
+                                  'Share',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Comments section with real-time updates
+                  Text(
+                    'Comments',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+
+                  SizedBox(height: 12),
+
+                  // Real-time comments list
+                  StreamBuilder<List<Map<String, dynamic>>>(
+                    stream: widget.communityService.getCommentsStream(
+                      post['id'],
+                    ),
+                    builder: (context, commentsSnapshot) {
+                      if (commentsSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.redAccent,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final comments = commentsSnapshot.data ?? [];
+
+                      if (comments.isEmpty) {
+                        return Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            'No comments yet. Be the first to comment!',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: comments.length,
+                        itemBuilder: (context, index) {
+                          final comment = comments[index];
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 12),
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 16,
+                                      backgroundColor: Colors.redAccent
+                                          .withOpacity(0.1),
+                                      child: Text(
+                                        comment['authorName'][0],
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            comment['authorName'],
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            _formatTimestamp(
+                                              comment['timestamp'],
+                                            ),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  comment['content'],
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Comment input
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.shade300)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: 'Write a comment...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
+                IconButton(
+                  onPressed: _postComment,
+                  icon: Icon(
+                    FontAwesomeIcons.paperPlane,
+                    color: Colors.redAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _toggleLike() async {
+    try {
+      await widget.communityService.toggleLike(post['id']);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating like: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _sharePost() async {
+    try {
+      await widget.communityService.sharePost(postId: post['id']);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Post shared!'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error sharing post: $e'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _postComment() async {
+    if (_commentController.text.trim().isNotEmpty) {
+      try {
+        await widget.communityService.addComment(
+          postId: post['id'],
+          content: _commentController.text.trim(),
+        );
+        _commentController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Comment posted!'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error posting comment: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+}

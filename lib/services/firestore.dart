@@ -40,8 +40,9 @@ class FirestoreService {
       'updatedAt': FieldValue.serverTimestamp(),
     };
     if (role != null) data['role'] = role;
-    if (extra != null)
+    if (extra != null) {
       data.addAll(extra.map((key, value) => MapEntry(key, value as Object)));
+    }
     await _db.collection('users').doc(uid).update(data);
   }
 
@@ -449,11 +450,13 @@ class FirestoreService {
       final data = <String, dynamic>{'updatedAt': FieldValue.serverTimestamp()};
 
       if (defaultWeight != null) data['defaultWeight'] = defaultWeight;
-      if (defaultTargetLevel != null)
+      if (defaultTargetLevel != null) {
         data['defaultTargetLevel'] = defaultTargetLevel;
+      }
       if (preferredUnits != null) data['preferredUnits'] = preferredUnits;
-      if (autoSaveCalculations != null)
+      if (autoSaveCalculations != null) {
         data['autoSaveCalculations'] = autoSaveCalculations;
+      }
 
       await _db
           .collection('user_calculation_settings')

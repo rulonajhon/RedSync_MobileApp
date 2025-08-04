@@ -64,7 +64,6 @@ class MyApp extends StatelessWidget {
             ),
             scaffoldBackgroundColor: Colors.black,
             cardColor: Colors.grey[900],
-            dialogBackgroundColor: Colors.grey[850],
             canvasColor: Colors.grey[900],
             textTheme: const TextTheme(
               bodyLarge: TextStyle(color: Colors.white, fontSize: 16),
@@ -137,6 +136,7 @@ class MyApp extends StatelessWidget {
               color: Colors.grey[700],
               thickness: 1,
             ),
+            dialogTheme: DialogThemeData(backgroundColor: Colors.grey[850]),
           ),
           themeMode: currentMode,
           debugShowCheckedModeBanner: false,
@@ -149,6 +149,8 @@ class MyApp extends StatelessWidget {
 }
 
 class AppInitializer extends StatefulWidget {
+  const AppInitializer({super.key});
+
   @override
   _AppInitializerState createState() => _AppInitializerState();
 }

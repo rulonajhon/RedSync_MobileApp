@@ -10,6 +10,7 @@ import 'package:hemophilia_manager/auth/auth.dart';
 import 'package:hemophilia_manager/services/firestore.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/notifications_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/community_screen.dart';
 
 class MainScreenDisplay extends StatefulWidget {
   const MainScreenDisplay({super.key});
@@ -205,7 +206,12 @@ class _MainScreenDisplayState extends State<MainScreenDisplay> {
                   size: 18,
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/community');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CommunityScreen(),
+                    ),
+                  );
                 },
               ),
             ),

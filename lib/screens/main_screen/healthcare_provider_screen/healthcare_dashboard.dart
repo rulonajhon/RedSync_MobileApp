@@ -358,7 +358,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
 
         return Column(
           children: [
-            ...patients.map((doc) => _buildPatientItem(doc)).toList(),
+            ...patients.map((doc) => _buildPatientItem(doc)),
             if (patients.length >= 3)
               _buildViewAllButton('View all patients', () {
                 Navigator.pushNamed(context, '/patientsList');
@@ -456,7 +456,7 @@ class _HealthcareDashboardState extends State<HealthcareDashboard> {
 
         return Column(
           children: [
-            ...requests.map((doc) => _buildRequestItem(doc)).toList(),
+            ...requests.map((doc) => _buildRequestItem(doc)),
             if (requests.length >= 3)
               _buildViewAllButton('View all requests', () {
                 // Navigate to requests tab

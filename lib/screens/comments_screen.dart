@@ -6,10 +6,10 @@ class CommentsScreen extends StatefulWidget {
   final String postContent;
 
   const CommentsScreen({
-    Key? key,
+    super.key,
     required this.postId,
     required this.postContent,
-  }) : super(key: key);
+  });
 
   @override
   _CommentsScreenState createState() => _CommentsScreenState();

@@ -17,7 +17,7 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
   bool _isLoadingLocation = false;
   bool _showList = false;
 
-  Set<Polyline> _polylines = {};
+  final Set<Polyline> _polylines = {};
   Map<String, dynamic>? _selectedLocation;
 
   // Enhanced clinics data with distance calculation support
@@ -662,7 +662,7 @@ class _ClinicLocatorScreenState extends State<ClinicLocatorScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      _getCurrentDataList().length > 0
+                      _getCurrentDataList().isNotEmpty
                           ? '${_getCurrentDataList().length} ${selectedType == "clinic" ? "treatment centers" : "drug outlets"} found'
                           : 'Loading locations...',
                       style: TextStyle(

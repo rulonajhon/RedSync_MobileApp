@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class TestDataSetup extends StatelessWidget {
-  const TestDataSetup({Key? key}) : super(key: key);
+  const TestDataSetup({super.key});
 
   static Future<void> addTestPosts() async {
     try {
