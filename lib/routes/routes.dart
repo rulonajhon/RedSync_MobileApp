@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/chatbot_screen.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/community_screen.dart';
 import 'package:hemophilia_manager/screens/main_screen/patient_screens/ps_screen/pre_screening.dart';
 import 'package:hemophilia_manager/screens/registration/authentication_landing_screen.dart';
 import 'package:hemophilia_manager/screens/main_screen/healthcare_provider_screen/healthcare_main_screen.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String chatbotScreen = '/chatbot';
   static const String preScreening = '/pre_screening';
   static const String messages = '/messages';
+  static const String community = '/community';
 
   static Map<String, WidgetBuilder>  routes = {
       onboarding: (context) => const OnboardingScreen(),
@@ -81,6 +83,7 @@ class AppRoutes {
       chatbotScreen: (context) => const ChatbotScreen(),
       preScreening: (context) => const PreScreeningScreen(),
       messages: (context) => const MessagesScreen(),
+      community: (context) => const CommunityScreen(),
       // Add other routes here as needed
   };
 }
