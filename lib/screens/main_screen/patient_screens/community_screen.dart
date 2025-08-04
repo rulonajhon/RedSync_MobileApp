@@ -33,43 +33,73 @@ class _CommunityScreenState extends State<CommunityScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text('Community', style: TextStyle(fontWeight: FontWeight.w600)),
+        toolbarHeight: 70,
+        title: Text('Community', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.redAccent,
         elevation: 0,
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(FontAwesomeIcons.arrowLeft, size: 18),
+        ),
         actions: [
-          IconButton(
-            onPressed: () {
-              // TODO: Implement search functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Search feature coming soon'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            icon: Icon(FontAwesomeIcons.magnifyingGlass, size: 18),
+          Container(
+            margin: EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: IconButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Search feature coming soon'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              icon: Icon(FontAwesomeIcons.magnifyingGlass, size: 16),
+              color: Colors.grey.shade600,
+            ),
           ),
-          IconButton(
-            onPressed: _showCreatePostDialog,
-            icon: Icon(FontAwesomeIcons.plus, size: 18),
+          Container(
+            margin: EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: IconButton(
+              onPressed: _showCreatePostDialog,
+              icon: Icon(FontAwesomeIcons.plus, size: 16),
+              color: Colors.redAccent,
+            ),
           ),
-          SizedBox(width: 8),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.redAccent,
-          labelColor: Colors.redAccent,
-          unselectedLabelColor: Colors.grey.shade600,
-          indicatorWeight: 3,
-          labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-          tabs: [
-            Tab(text: 'Feed'),
-            Tab(text: 'Groups'),
-            Tab(text: 'Events'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(50),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade100, width: 1),
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: Colors.redAccent,
+              labelColor: Colors.redAccent,
+              unselectedLabelColor: Colors.grey.shade600,
+              indicatorWeight: 3,
+              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+              tabs: [
+                Tab(text: 'Feed'),
+                Tab(text: 'Groups'),
+                Tab(text: 'Events'),
+              ],
+            ),
+          ),
         ),
       ),
       body: SafeArea(
@@ -92,8 +122,13 @@ class _CommunityScreenState extends State<CommunityScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.redAccent,
+                      strokeWidth: 2.5,
+                    ),
                   ),
                   SizedBox(height: 16),
                   Text(
@@ -107,43 +142,60 @@ class _CommunityScreenState extends State<CommunityScreen>
 
           if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    FontAwesomeIcons.triangleExclamation,
-                    size: 48,
-                    color: Colors.orange,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Error loading posts',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade700,
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(40),
+                      ),
+                      child: Icon(
+                        FontAwesomeIcons.triangleExclamation,
+                        size: 32,
+                        color: Colors.orange.shade400,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Please check your connection and try again',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _postsStream = _communityService.getPostsStream();
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      foregroundColor: Colors.white,
+                    SizedBox(height: 24),
+                    Text(
+                      'Error loading posts',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade700,
+                      ),
                     ),
-                    child: Text('Retry'),
-                  ),
-                ],
+                    SizedBox(height: 8),
+                    Text(
+                      'Please check your connection and try again',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _postsStream = _communityService.getPostsStream();
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -154,11 +206,12 @@ class _CommunityScreenState extends State<CommunityScreen>
             return _buildEmptyFeedState();
           }
 
-          return ListView.builder(
-            padding: EdgeInsets.symmetric(vertical: 16),
+          return ListView.separated(
+            padding: EdgeInsets.all(20),
             itemCount: posts.length,
+            separatorBuilder: (context, index) => SizedBox(height: 16),
             itemBuilder: (context, index) {
-              return _buildPostItemWithStreams(posts[index]);
+              return _buildPostItem(posts[index]);
             },
           );
         },
@@ -167,17 +220,28 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Widget _buildEmptyFeedState() {
-    return SingleChildScrollView(
-      physics: AlwaysScrollableScrollPhysics(),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.6,
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(FontAwesomeIcons.users, size: 64, color: Colors.grey.shade400),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(40),
+              ),
+              child: Icon(
+                FontAwesomeIcons.users,
+                size: 32,
+                color: Colors.grey.shade400,
+              ),
+            ),
             SizedBox(height: 24),
             Text(
-              'Welcome to the Community Feed',
+              'Welcome to the Community',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -186,29 +250,29 @@ class _CommunityScreenState extends State<CommunityScreen>
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 12),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: Text(
-                'Connect with other patients, share your experiences, and support each other on your hemophilia journey.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
+            Text(
+              'Connect with other patients, share your experiences, and support each other on your hemophilia journey.',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey.shade600,
+                height: 1.5,
               ),
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: _showCreatePostDialog,
-              icon: Icon(FontAwesomeIcons.plus, size: 16),
-              label: Text('Create Your First Post'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Container(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: _showCreatePostDialog,
+                icon: Icon(FontAwesomeIcons.plus, size: 16),
+                label: Text('Create Your First Post'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -223,18 +287,25 @@ class _CommunityScreenState extends State<CommunityScreen>
     );
   }
 
-  Widget _buildPostItemWithStreams(Map<String, dynamic> post) {
+  Widget _buildPostItem(Map<String, dynamic> post) {
     final postId = post['id'] as String;
 
-    return GestureDetector(
+    return InkWell(
       onTap: () => _expandPost(post),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.08),
+              spreadRadius: 1,
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,14 +313,21 @@ class _CommunityScreenState extends State<CommunityScreen>
             // Post Header
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.redAccent.withOpacity(0.1),
-                  child: Text(
-                    post['authorName'][0],
-                    style: TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Center(
+                    child: Text(
+                      post['authorName'][0],
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                   ),
                 ),
@@ -266,23 +344,24 @@ class _CommunityScreenState extends State<CommunityScreen>
                           color: Colors.black87,
                         ),
                       ),
+                      SizedBox(height: 2),
                       Row(
                         children: [
                           Container(
                             padding: EdgeInsets.symmetric(
-                              horizontal: 6,
+                              horizontal: 8,
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
                               color: Colors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               post['authorRole'],
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -299,29 +378,38 @@ class _CommunityScreenState extends State<CommunityScreen>
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () => _showPostOptions(post),
-                  icon: Icon(FontAwesomeIcons.ellipsis, size: 16),
-                  color: Colors.grey.shade600,
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: IconButton(
+                    onPressed: () => _showPostOptions(post),
+                    icon: Icon(FontAwesomeIcons.ellipsis, size: 14),
+                    color: Colors.grey.shade600,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
               ],
             ),
 
-            SizedBox(height: 12),
+            SizedBox(height: 16),
 
             // Post Content
             Text(
               post['content'],
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 color: Colors.black87,
-                height: 1.4,
+                height: 1.5,
               ),
             ),
 
-            SizedBox(height: 16),
+            SizedBox(height: 20),
 
-            // Real-time engagement stats using StreamBuilder
+            // Real-time engagement stats
             StreamBuilder<Map<String, dynamic>>(
               stream: _communityService.getLikesStream(postId),
               builder: (context, likesSnapshot) {
@@ -337,41 +425,63 @@ class _CommunityScreenState extends State<CommunityScreen>
                     return Column(
                       children: [
                         // Engagement stats
-                        Row(
-                          children: [
-                            if (likesCount > 0) ...[
-                              Icon(
-                                FontAwesomeIcons.solidHeart,
-                                size: 14,
-                                color: Colors.red,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                '$likesCount',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
+                        if (likesCount > 0 || commentsCount > 0) ...[
+                          Row(
+                            children: [
+                              if (likesCount > 0) ...[
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        FontAwesomeIcons.solidHeart,
+                                        size: 12,
+                                        color: Colors.red,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '$likesCount',
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                            Spacer(),
-                            if (commentsCount > 0) ...[
-                              Text(
-                                '$commentsCount comments',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
+                              ],
+                              Spacer(),
+                              if (commentsCount > 0) ...[
+                                Text(
+                                  '$commentsCount comments',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
-                        ),
+                          ),
+                          SizedBox(height: 16),
+                        ],
 
-                        Divider(
-                          height: 24,
-                          thickness: 1,
-                          color: Colors.grey.shade300,
+                        // Divider
+                        Container(
+                          width: double.infinity,
+                          height: 1,
+                          color: Colors.grey.shade200,
                         ),
+                        SizedBox(height: 16),
 
                         // Post Actions
                         Row(
@@ -386,14 +496,14 @@ class _CommunityScreenState extends State<CommunityScreen>
                                   : Colors.grey.shade600,
                               onTap: () => _toggleLike(postId),
                             ),
-                            Expanded(child: SizedBox()),
+                            SizedBox(width: 32),
                             _buildActionButton(
                               icon: FontAwesomeIcons.comment,
                               label: 'Comment',
                               color: Colors.grey.shade600,
                               onTap: () => _showCommentDialog(post),
                             ),
-                            Expanded(child: SizedBox()),
+                            SizedBox(width: 32),
                             _buildActionButton(
                               icon: FontAwesomeIcons.share,
                               label: 'Share',
@@ -440,65 +550,69 @@ class _CommunityScreenState extends State<CommunityScreen>
   }
 
   Widget _buildGroupsTab() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildComingSoonCard(
-              icon: FontAwesomeIcons.users,
-              title: 'Support Groups',
-              subtitle:
-                  'Connect with others in your area or condition-specific groups',
-            ),
-            SizedBox(height: 16),
-            _buildComingSoonCard(
-              icon: FontAwesomeIcons.commentDots,
-              title: 'Discussion Forums',
-              subtitle: 'Join topic-based discussions and ask questions',
-            ),
-            SizedBox(height: 16),
-            _buildComingSoonCard(
-              icon: FontAwesomeIcons.userDoctor,
-              title: 'Expert Q&A',
-              subtitle: 'Get answers from healthcare professionals',
-            ),
-          ],
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              _buildComingSoonItem(
+                icon: FontAwesomeIcons.users,
+                title: 'Support Groups',
+                subtitle:
+                    'Connect with others in your area or condition-specific groups',
+              ),
+              SizedBox(height: 16),
+              _buildComingSoonItem(
+                icon: FontAwesomeIcons.commentDots,
+                title: 'Discussion Forums',
+                subtitle: 'Join topic-based discussions and ask questions',
+              ),
+              SizedBox(height: 16),
+              _buildComingSoonItem(
+                icon: FontAwesomeIcons.userDoctor,
+                title: 'Expert Q&A',
+                subtitle: 'Get answers from healthcare professionals',
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEventsTab() {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildComingSoonCard(
-              icon: FontAwesomeIcons.calendar,
-              title: 'Community Events',
-              subtitle: 'Local meetups, conferences, and support events',
-            ),
-            SizedBox(height: 16),
-            _buildComingSoonCard(
-              icon: FontAwesomeIcons.chalkboardUser,
-              title: 'Educational Webinars',
-              subtitle: 'Learn from experts about hemophilia management',
-            ),
-            SizedBox(height: 16),
-            _buildComingSoonCard(
-              icon: FontAwesomeIcons.handHoldingHeart,
-              title: 'Fundraising Events',
-              subtitle: 'Participate in awareness and fundraising activities',
-            ),
-          ],
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              _buildComingSoonItem(
+                icon: FontAwesomeIcons.calendar,
+                title: 'Community Events',
+                subtitle: 'Local meetups, conferences, and support events',
+              ),
+              SizedBox(height: 16),
+              _buildComingSoonItem(
+                icon: FontAwesomeIcons.chalkboardUser,
+                title: 'Educational Webinars',
+                subtitle: 'Learn from experts about hemophilia management',
+              ),
+              SizedBox(height: 16),
+              _buildComingSoonItem(
+                icon: FontAwesomeIcons.handHoldingHeart,
+                title: 'Fundraising Events',
+                subtitle: 'Participate in awareness and fundraising activities',
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildComingSoonCard({
+  Widget _buildComingSoonItem({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -507,9 +621,16 @@ class _CommunityScreenState extends State<CommunityScreen>
       width: double.infinity,
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            spreadRadius: 1,
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [

@@ -184,65 +184,71 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B0000),
-        title: const Text('Post', style: TextStyle(color: Colors.white)),
+        toolbarHeight: 70,
+        title: Text('Post', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.redAccent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(FontAwesomeIcons.arrowLeft, size: 18),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        children: [
-          // Post Content Section
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Post Card
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Post Content Section
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                child: Column(
+                  children: [
+                    // Post Header Section
+                    Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.all(20),
+                      padding: EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.08),
+                            spreadRadius: 1,
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Post Header
+                          // Author Info
                           Row(
                             children: [
-                              CircleAvatar(
-                                radius: 25,
-                                backgroundColor: const Color(
-                                  0xFF8B0000,
-                                ).withOpacity(0.1),
-                                child: Text(
-                                  widget.post['authorName']?[0]
-                                          ?.toUpperCase() ??
-                                      'U',
-                                  style: const TextStyle(
-                                    color: Color(0xFF8B0000),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    widget.post['authorName']?[0]
+                                            ?.toUpperCase() ??
+                                        'U',
+                                    style: TextStyle(
+                                      color: Colors.redAccent,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,22 +256,48 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                     Text(
                                       widget.post['authorName'] ??
                                           'Unknown User',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
+                                        color: Colors.grey.shade800,
                                       ),
                                     ),
-                                    Text(
-                                      _formatTimestamp(
-                                        _safeTimestamp(
-                                          widget.post['timestamp'],
+                                    SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            widget.post['authorRole'] ?? 'User',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.blue.shade700,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey[600],
-                                      ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          _formatTimestamp(
+                                            _safeTimestamp(
+                                              widget.post['timestamp'],
+                                            ),
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -273,313 +305,435 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                             ],
                           ),
 
-                          const SizedBox(height: 16),
+                          SizedBox(height: 20),
 
                           // Post Content
                           Text(
                             widget.post['content'] ?? '',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
-                              color: Colors.black87,
-                              height: 1.5,
+                              color: Colors.grey.shade800,
+                              height: 1.6,
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          SizedBox(height: 24),
 
-                          // Action Buttons with Real-time Data
-                          Row(
-                            children: [
-                              // Like Button with Stream
-                              StreamBuilder<Map<String, dynamic>>(
-                                stream: _communityService.getLikesStream(
-                                  widget.post['id'],
-                                ),
-                                builder: (context, likesSnapshot) {
-                                  final likesData = likesSnapshot.data ?? {};
-                                  final likesCount = likesData['count'] ?? 0;
-                                  return _buildActionButton(
-                                    icon: Icons.thumb_up,
-                                    label: likesCount.toString(),
-                                    color: const Color(0xFF8B0000),
-                                    onTap: () => _toggleLike(widget.post['id']),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 12),
-
-                              // Comment Button with Stream
-                              StreamBuilder<int>(
+                          // Engagement Stats
+                          StreamBuilder<Map<String, dynamic>>(
+                            stream: _communityService.getLikesStream(
+                              widget.post['id'],
+                            ),
+                            builder: (context, likesSnapshot) {
+                              return StreamBuilder<int>(
                                 stream: _communityService
                                     .getCommentsCountStream(widget.post['id']),
                                 builder: (context, commentsSnapshot) {
+                                  final likesData =
+                                      likesSnapshot.data ??
+                                      {'count': 0, 'isLiked': false};
+                                  final likesCount = likesData['count'] as int;
+                                  final isLiked = likesData['isLiked'] as bool;
                                   final commentsCount =
                                       commentsSnapshot.data ?? 0;
-                                  return _buildActionButton(
-                                    icon: Icons.comment,
-                                    label: commentsCount.toString(),
-                                    color: Colors.blue,
-                                    onTap: () {
-                                      // Scroll to comments section
-                                      _scrollController.animateTo(
-                                        _scrollController
-                                            .position
-                                            .maxScrollExtent,
-                                        duration: const Duration(
-                                          milliseconds: 300,
+
+                                  return Column(
+                                    children: [
+                                      // Stats Row
+                                      if (likesCount > 0 ||
+                                          commentsCount > 0) ...[
+                                        Row(
+                                          children: [
+                                            if (likesCount > 0) ...[
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      FontAwesomeIcons
+                                                          .solidHeart,
+                                                      size: 14,
+                                                      color: Colors.red,
+                                                    ),
+                                                    SizedBox(width: 6),
+                                                    Text(
+                                                      '$likesCount',
+                                                      style: TextStyle(
+                                                        color: Colors.red,
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            Spacer(),
+                                            if (commentsCount > 0) ...[
+                                              Text(
+                                                '$commentsCount comments',
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
-                                        curve: Curves.easeInOut,
-                                      );
-                                    },
+                                        SizedBox(height: 20),
+                                      ],
+
+                                      // Divider
+                                      Container(
+                                        width: double.infinity,
+                                        height: 1,
+                                        color: Colors.grey.shade200,
+                                      ),
+                                      SizedBox(height: 20),
+
+                                      // Action Buttons
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          _buildActionButton(
+                                            icon: isLiked
+                                                ? FontAwesomeIcons.solidHeart
+                                                : FontAwesomeIcons.heart,
+                                            label: 'Like',
+                                            color: isLiked
+                                                ? Colors.red
+                                                : Colors.grey.shade600,
+                                            onTap: () =>
+                                                _toggleLike(widget.post['id']),
+                                          ),
+                                          _buildActionButton(
+                                            icon: FontAwesomeIcons.comment,
+                                            label: 'Comment',
+                                            color: Colors.grey.shade600,
+                                            onTap: () {
+                                              _scrollController.animateTo(
+                                                _scrollController
+                                                    .position
+                                                    .maxScrollExtent,
+                                                duration: Duration(
+                                                  milliseconds: 300,
+                                                ),
+                                                curve: Curves.easeInOut,
+                                              );
+                                            },
+                                          ),
+                                          _buildActionButton(
+                                            icon: FontAwesomeIcons.share,
+                                            label: 'Share',
+                                            color: Colors.grey.shade600,
+                                            onTap: () => _sharePost(
+                                              widget.post['content'] ?? '',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   );
                                 },
-                              ),
-                              const SizedBox(width: 12),
-
-                              // Share Button
-                              _buildActionButton(
-                                icon: Icons.share,
-                                label: 'Share',
-                                color: Colors.green,
-                                onTap: () =>
-                                    _sharePost(widget.post['content'] ?? ''),
-                              ),
-                            ],
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
-
-                  // Comments Section
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
+                    // Comments Section
+                    Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      padding: EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.08),
+                            spreadRadius: 1,
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
                             'Comments',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: Colors.grey.shade800,
                             ),
                           ),
-                        ),
+                          SizedBox(height: 20),
 
-                        // Comments List
-                        StreamBuilder<List<Map<String, dynamic>>>(
-                          stream: _communityService.getCommentsStream(
-                            widget.post['id'],
-                          ),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Padding(
-                                padding: EdgeInsets.all(20),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-
-                            if (snapshot.hasError) {
-                              return Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Center(
-                                  child: Text(
-                                    'Error loading comments: ${snapshot.error}',
-                                  ),
-                                ),
-                              );
-                            }
-
-                            final comments = snapshot.data ?? [];
-
-                            if (comments.isEmpty) {
-                              return const Padding(
-                                padding: EdgeInsets.all(20),
-                                child: Center(
-                                  child: Text(
-                                    'No comments yet. Be the first to comment!',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 14,
+                          // Comments List
+                          StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: _communityService.getCommentsStream(
+                              widget.post['id'],
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(32),
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.redAccent,
+                                        strokeWidth: 2.5,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }
+                                );
+                              }
 
-                            return ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              itemCount: comments.length,
-                              separatorBuilder: (context, index) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final comment = comments[index];
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor: const Color(
-                                          0xFF8B0000,
-                                        ).withOpacity(0.1),
-                                        child: Text(
-                                          comment['authorName']?[0]
-                                                  ?.toUpperCase() ??
-                                              'U',
-                                          style: const TextStyle(
-                                            color: Color(0xFF8B0000),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
+                              if (snapshot.hasError) {
+                                return Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(32),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          FontAwesomeIcons.triangleExclamation,
+                                          color: Colors.orange.shade400,
+                                          size: 32,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          'Error loading comments',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 16,
                                           ),
                                         ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final comments = snapshot.data ?? [];
+
+                              if (comments.isEmpty) {
+                                return Container(
+                                  width: double.infinity,
+                                  padding: EdgeInsets.all(32),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        FontAwesomeIcons.comment,
+                                        color: Colors.grey.shade400,
+                                        size: 32,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  comment['authorName'] ??
-                                                      'Unknown User',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  _formatTimestamp(
-                                                    _safeTimestamp(
-                                                      comment['timestamp'],
-                                                    ),
-                                                  ),
-                                                  style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              comment['content'] ?? '',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.black87,
-                                              ),
-                                            ),
-                                          ],
+                                      SizedBox(height: 16),
+                                      Text(
+                                        'No comments yet',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Be the first to comment!',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade500,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ],
                                   ),
                                 );
-                              },
-                            );
-                          },
-                        ),
+                              }
 
-                        const SizedBox(height: 16),
-                      ],
+                              return ListView.separated(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: comments.length,
+                                separatorBuilder: (context, index) =>
+                                    SizedBox(height: 16),
+                                itemBuilder: (context, index) {
+                                  final comment = comments[index];
+                                  return Container(
+                                    padding: EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: Colors.redAccent.withOpacity(
+                                              0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              comment['authorName']?[0]
+                                                      ?.toUpperCase() ??
+                                                  'U',
+                                              style: TextStyle(
+                                                color: Colors.redAccent,
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    comment['authorName'] ??
+                                                        'Unknown User',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color:
+                                                          Colors.grey.shade800,
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Text(
+                                                    _formatTimestamp(
+                                                      _safeTimestamp(
+                                                        comment['timestamp'],
+                                                      ),
+                                                    ),
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(height: 6),
+                                              Text(
+                                                comment['content'] ?? '',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey.shade800,
+                                                  height: 1.4,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // Comment Input
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 1,
-                  blurRadius: 3,
-                  offset: const Offset(0, -1),
+            // Comment Input
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200, width: 1),
                 ),
-              ],
-            ),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _commentController,
-                      decoration: InputDecoration(
-                        hintText: 'Write a comment...',
-                        border: OutlineInputBorder(
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          border: Border.all(color: Colors.grey.shade200),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF8B0000),
+                        child: TextField(
+                          controller: _commentController,
+                          decoration: InputDecoration(
+                            hintText: 'Write a comment...',
+                            hintStyle: TextStyle(color: Colors.grey.shade500),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
                           ),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                          maxLines: null,
+                          textCapitalization: TextCapitalization.sentences,
                         ),
                       ),
-                      maxLines: null,
-                      textCapitalization: TextCapitalization.sentences,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  FloatingActionButton(
-                    onPressed: _addComment,
-                    backgroundColor: const Color(0xFF8B0000),
-                    mini: true,
-                    child: const Icon(
-                      Icons.send,
-                      color: Colors.white,
-                      size: 20,
+                    SizedBox(width: 12),
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: IconButton(
+                        onPressed: _addComment,
+                        icon: Icon(
+                          FontAwesomeIcons.paperPlane,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -593,7 +747,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
@@ -602,7 +756,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
