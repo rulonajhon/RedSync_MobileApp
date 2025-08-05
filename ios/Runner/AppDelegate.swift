@@ -1,5 +1,9 @@
 import Flutter
 import UIKit
+<<<<<<< HEAD
+=======
+import GoogleMaps
+>>>>>>> cbcb0a1 (New Updated File)
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -7,6 +11,18 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+<<<<<<< HEAD
+=======
+    // Load Google Maps API key from Config.plist
+    if let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
+       let config = NSDictionary(contentsOfFile: path),
+       let apiKey = config["GOOGLE_MAPS_API_KEY"] as? String {
+      GMSServices.provideAPIKey(apiKey)
+    } else {
+      print("Warning: Could not load Google Maps API key from Config.plist")
+    }
+    
+>>>>>>> cbcb0a1 (New Updated File)
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
