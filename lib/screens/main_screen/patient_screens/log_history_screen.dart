@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'log_bleed.dart'; // adjust path if needed
-import 'log_infusion.dart'; // adjust path if needed
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../../services/firestore.dart';
 
 class LogHistoryScreen extends StatefulWidget {
   const LogHistoryScreen({super.key});
@@ -13,14 +12,60 @@ class LogHistoryScreen extends StatefulWidget {
 class _LogHistoryScreenState extends State<LogHistoryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final FirestoreService _firestoreService = FirestoreService();
+  List<Map<String, dynamic>> _bleedLogs = [];
+  List<Map<String, dynamic>> _infusionLogs = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Ensure Hive box is open
-    Hive.openBox<BleedLog>('bleed_logs');
-    Hive.openBox<InfusionLog>('infusion_logs');
+    _loadData();
+  }
+
+  @override
+  void didUpdateWidget(LogHistoryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload data when widget updates
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        print('Loading data for user: ${user.uid}'); // Debug log
+
+        // Load bleed logs from Firestore
+        final bleeds = await _firestoreService.getBleedLogs(
+          user.uid,
+          limit: 50,
+        );
+
+        print('Loaded ${bleeds.length} bleed logs'); // Debug log
+
+        // Load dosage calculations as infusion logs
+        final dosages = await _firestoreService.getDosageCalculationHistory(
+          user.uid,
+          limit: 50,
+        );
+
+        print('Loaded ${dosages.length} dosage calculations'); // Debug log
+
+        setState(() {
+          _bleedLogs = bleeds;
+          _infusionLogs = dosages;
+          _isLoading = false;
+        });
+      } else {
+        print('No user logged in'); // Debug log
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      print('Error loading data: $e'); // Debug log for troubleshooting
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -81,18 +126,18 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
                 SizedBox(height: 8),
                 Text(
                   'Track and monitor your bleeding episodes',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                 ),
                 SizedBox(height: 24),
                 Expanded(
-                  child: ValueListenableBuilder(
-                    valueListenable: Hive.box<BleedLog>('bleed_logs').listenable(),
-                    builder: (context, Box<BleedLog> box, _) {
-                      if (box.isEmpty) {
-                        return Center(
+                  child: _isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.redAccent,
+                          ),
+                        )
+                      : _bleedLogs.isEmpty
+                      ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -121,112 +166,188 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
                               ),
                             ],
                           ),
-                        );
-                      }
-                      return ListView.separated(
-                        itemCount: box.length,
-                        separatorBuilder: (context, index) => Container(
-                          height: 1,
-                          margin: EdgeInsets.symmetric(vertical: 8),
-                          color: Colors.grey.shade200,
-                        ),
-                        itemBuilder: (context, index) {
-                          final log = box.getAt(index);
-                          if (log == null) return SizedBox.shrink();
-                          
-                          return Container(
-                            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(12),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: ListView.separated(
+                            itemCount: _bleedLogs.length,
+                            separatorBuilder: (context, index) => Container(
+                              height: 1,
+                              margin: EdgeInsets.symmetric(vertical: 8),
+                              color: Colors.grey.shade200,
                             ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: _getSeverityColor(log.severity).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.bloodtype,
-                                    color: _getSeverityColor(log.severity),
-                                    size: 24,
-                                  ),
+                            itemBuilder: (context, index) {
+                              final log = _bleedLogs[index];
+
+                              return Container(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 20,
                                 ),
-                                SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: _getSeverityColor(
+                                          log['severity'] ?? 'Mild',
+                                        ).withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        Icons.bloodtype,
+                                        color: _getSeverityColor(
+                                          log['severity'] ?? 'Mild',
+                                        ),
+                                        size: 24,
+                                      ),
+                                    ),
+                                    SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            log.bodyRegion,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: Colors.black87,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                log['bodyRegion'] ?? 'Unknown',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8),
+                                              Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: _getSeverityColor(
+                                                    log['severity'] ?? 'Mild',
+                                                  ).withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  log['severity'] ?? 'Mild',
+                                                  style: TextStyle(
+                                                    color: _getSeverityColor(
+                                                      log['severity'] ?? 'Mild',
+                                                    ),
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          SizedBox(width: 8),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: _getSeverityColor(log.severity).withOpacity(0.1),
-                                              borderRadius: BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              log.severity,
-                                              style: TextStyle(
-                                                color: _getSeverityColor(log.severity),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
+                                          if (log['specificRegion'] != null &&
+                                              log['specificRegion']
+                                                  .toString()
+                                                  .isNotEmpty)
+                                            Padding(
+                                              padding: EdgeInsets.only(top: 4),
+                                              child: Text(
+                                                log['specificRegion'],
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 14,
+                                                ),
                                               ),
                                             ),
+                                          SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.calendar_today,
+                                                size: 16,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                log['date'] ??
+                                                    _formatDate(
+                                                      log['createdAt'],
+                                                    ),
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              SizedBox(width: 16),
+                                              Icon(
+                                                Icons.access_time,
+                                                size: 16,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                log['time'] ??
+                                                    _formatTime(
+                                                      log['createdAt'],
+                                                    ),
+                                                style: TextStyle(
+                                                  color: Colors.grey.shade600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                          if (log['notes'] != null &&
+                                              log['notes']
+                                                  .toString()
+                                                  .isNotEmpty)
+                                            Padding(
+                                              padding: EdgeInsets.only(top: 8),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.note,
+                                                    size: 16,
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                  SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      log['notes'],
+                                                      style: TextStyle(
+                                                        color: Colors
+                                                            .grey
+                                                            .shade600,
+                                                        fontSize: 14,
+                                                        fontStyle:
+                                                            FontStyle.italic,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            log.date,
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          SizedBox(width: 16),
-                                          Icon(Icons.access_time, size: 16, color: Colors.grey.shade600),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            log.time,
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey.shade400,
+                                      size: 24,
+                                    ),
+                                  ],
                                 ),
-                                Icon(
-                                  Icons.chevron_right,
-                                  color: Colors.grey.shade400,
-                                  size: 24,
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                              );
+                            },
+                          ),
+                        ),
                 ),
               ],
             ),
@@ -236,6 +357,7 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton.large(
+        heroTag: "log_history_fab", // Unique tag to avoid conflicts
         foregroundColor: Colors.white,
         tooltip: 'Add New Log',
         onPressed: () {
@@ -326,18 +448,14 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
           SizedBox(height: 8),
           Text(
             'Track your treatment history',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
           ),
           SizedBox(height: 24),
           Expanded(
-            child: ValueListenableBuilder(
-              valueListenable: Hive.box<InfusionLog>('infusion_logs').listenable(),
-              builder: (context, Box<InfusionLog> box, _) {
-                if (box.isEmpty) {
-                  return Center(
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.green))
+                : _infusionLogs.isEmpty
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -348,7 +466,7 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
                         ),
                         SizedBox(height: 24),
                         Text(
-                          'No infusions recorded yet',
+                          'No dosage calculations yet',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -357,7 +475,7 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
                         ),
                         SizedBox(height: 8),
                         Text(
-                          'Your infusion history will appear here',
+                          'Your dosage calculation history will appear here',
                           style: TextStyle(
                             color: Colors.grey.shade500,
                             fontSize: 16,
@@ -366,109 +484,109 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
                         ),
                       ],
                     ),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: box.length,
-                  separatorBuilder: (context, index) => Container(
-                    height: 1,
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    color: Colors.grey.shade200,
-                  ),
-                  itemBuilder: (context, index) {
-                    final log = box.getAt(index);
-                    if (log == null) return SizedBox.shrink();
-                    return Container(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(12),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: ListView.separated(
+                      itemCount: _infusionLogs.length,
+                      separatorBuilder: (context, index) => Container(
+                        height: 1,
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        color: Colors.grey.shade200,
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.medical_services,
-                              color: Colors.green,
-                              size: 24,
-                            ),
+                      itemBuilder: (context, index) {
+                        final log = _infusionLogs[index];
+                        return Container(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 20,
                           ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  log.medication,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: Colors.black87,
-                                  ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Dose: ${log.doseIU} IU',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade700,
-                                    fontSize: 14,
-                                  ),
+                                child: Icon(
+                                  Icons.medical_services,
+                                  color: Colors.green,
+                                  size: 24,
                                 ),
-                                SizedBox(height: 8),
-                                Row(
+                              ),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.calendar_today, size: 16, color: Colors.grey.shade600),
-                                    SizedBox(width: 4),
                                     Text(
-                                      log.date,
+                                      '${log['factorType'] ?? 'Factor'} Dosage',
                                       style: TextStyle(
-                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Dose: ${log['dosage'] ?? '0'} IU',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
                                         fontSize: 14,
                                       ),
                                     ),
-                                    SizedBox(width: 16),
-                                    Icon(Icons.access_time, size: 16, color: Colors.grey.shade600),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      log.time,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 14,
-                                      ),
+                                    SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          size: 16,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Weight: ${log['weight'] ?? '0'} kg',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        SizedBox(width: 16),
+                                        Icon(
+                                          Icons.calendar_today,
+                                          size: 16,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          _formatTimestamp(log['timestamp']),
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                if (log.notes.isNotEmpty) ...[
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Notes: ${log.notes}',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade500,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
+                              ),
+                              Icon(
+                                Icons.chevron_right,
+                                color: Colors.grey.shade400,
+                                size: 24,
+                              ),
+                            ],
                           ),
-                          Icon(
-                            Icons.chevron_right,
-                            color: Colors.grey.shade400,
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -498,7 +616,7 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 24),
@@ -519,10 +637,7 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
                   SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
                 ],
               ),
@@ -549,6 +664,56 @@ class _LogHistoryScreenState extends State<LogHistoryScreen>
       default:
         return Colors.grey;
     }
+  }
+
+  String _formatTimestamp(dynamic timestamp) {
+    try {
+      if (timestamp != null) {
+        final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        return '${date.day}/${date.month}/${date.year}';
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+    return 'Unknown';
+  }
+
+  String _formatDate(dynamic timestamp) {
+    try {
+      if (timestamp != null) {
+        DateTime date;
+        if (timestamp is int) {
+          date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        } else if (timestamp.toDate != null) {
+          date = timestamp.toDate();
+        } else {
+          return 'Unknown';
+        }
+        return '${date.day}/${date.month}/${date.year}';
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+    return 'Unknown';
+  }
+
+  String _formatTime(dynamic timestamp) {
+    try {
+      if (timestamp != null) {
+        DateTime date;
+        if (timestamp is int) {
+          date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        } else if (timestamp.toDate != null) {
+          date = timestamp.toDate();
+        } else {
+          return 'Unknown';
+        }
+        return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+    return 'Unknown';
   }
 }
 

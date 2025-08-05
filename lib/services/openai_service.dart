@@ -9,17 +9,12 @@ class OpenAIService {
   static Future<void> initialize() async {
     await dotenv.load(fileName: "assets/.env");
     _apiKey = dotenv.env['OPENAI_API_KEY'];
-<<<<<<< HEAD
-    if (_apiKey == null || _apiKey!.isEmpty) {
-      throw Exception('OpenAI API key not found in .env file');
-=======
     if (_apiKey == null ||
         _apiKey!.isEmpty ||
         _apiKey == 'your_openai_api_key_here') {
       throw Exception(
         'OpenAI API key not found or not configured in .env file',
       );
->>>>>>> cbcb0a1 (New Updated File)
     }
   }
 
@@ -80,8 +75,4 @@ class OpenAIService {
       );
     }
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> cbcb0a1 (New Updated File)

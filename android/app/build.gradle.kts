@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -8,6 +10,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Load secrets from properties file
+val secretsPropertiesFile = rootProject.file("secrets.properties")
+val secretsProperties = Properties()
+if (secretsPropertiesFile.exists()) {
+    secretsProperties.load(secretsPropertiesFile.inputStream())
+}
+
 android {
     namespace = "com.example.hemophilia_manager"
     compileSdk = flutter.compileSdkVersion
@@ -16,6 +25,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -31,6 +41,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // Inject Google Maps API key from secrets
+        manifestPlaceholders["googleMapsApiKey"] = secretsProperties.getProperty("GOOGLE_MAPS_API_KEY", "")
     }
 
     buildTypes {
@@ -40,6 +53,10 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

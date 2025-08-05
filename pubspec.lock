@@ -206,8 +206,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-<<<<<<< HEAD
-=======
   cross_file:
     dependency: transitive
     description:
@@ -216,7 +214,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.3.4+2"
->>>>>>> cbcb0a1 (New Updated File)
   crypto:
     dependency: transitive
     description:
@@ -249,8 +246,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.8"
-<<<<<<< HEAD
-=======
   dbus:
     dependency: transitive
     description:
@@ -259,7 +254,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.11"
->>>>>>> cbcb0a1 (New Updated File)
   fake_async:
     dependency: transitive
     description:
@@ -361,8 +355,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.0"
-<<<<<<< HEAD
-=======
   flutter_local_notifications:
     dependency: "direct main"
     description:
@@ -387,7 +379,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "8.0.0"
->>>>>>> cbcb0a1 (New Updated File)
   flutter_markdown:
     dependency: "direct main"
     description:
@@ -452,8 +443,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
-<<<<<<< HEAD
-=======
   flutter_slidable:
     dependency: "direct main"
     description:
@@ -462,7 +451,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.2"
->>>>>>> cbcb0a1 (New Updated File)
   flutter_speed_dial:
     dependency: "direct main"
     description:
@@ -497,8 +485,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.0"
-<<<<<<< HEAD
-=======
   geolocator:
     dependency: "direct main"
     description:
@@ -547,7 +533,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.5"
->>>>>>> cbcb0a1 (New Updated File)
   glob:
     dependency: transitive
     description:
@@ -908,8 +893,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-<<<<<<< HEAD
-=======
   permission_handler:
     dependency: "direct main"
     description:
@@ -966,7 +949,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
->>>>>>> cbcb0a1 (New Updated File)
   platform:
     dependency: transitive
     description:
@@ -1023,8 +1005,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-<<<<<<< HEAD
-=======
   share_plus:
     dependency: "direct main"
     description:
@@ -1041,7 +1021,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.2"
->>>>>>> cbcb0a1 (New Updated File)
   shared_preferences:
     dependency: "direct main"
     description:
@@ -1159,8 +1138,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.10.1"
-<<<<<<< HEAD
-=======
   sprintf:
     dependency: transitive
     description:
@@ -1169,7 +1146,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.0"
->>>>>>> cbcb0a1 (New Updated File)
   stack_trace:
     dependency: transitive
     description:
@@ -1226,8 +1202,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.4"
-<<<<<<< HEAD
-=======
   timezone:
     dependency: "direct main"
     description:
@@ -1236,7 +1210,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.10.1"
->>>>>>> cbcb0a1 (New Updated File)
   timing:
     dependency: transitive
     description:
@@ -1317,8 +1290,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.4"
-<<<<<<< HEAD
-=======
   uuid:
     dependency: transitive
     description:
@@ -1327,7 +1298,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.5.1"
->>>>>>> cbcb0a1 (New Updated File)
   vector_math:
     dependency: transitive
     description:
@@ -1392,8 +1362,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
-<<<<<<< HEAD
-=======
   xml:
     dependency: transitive
     description:
@@ -1402,7 +1370,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
->>>>>>> cbcb0a1 (New Updated File)
   yaml:
     dependency: transitive
     description:

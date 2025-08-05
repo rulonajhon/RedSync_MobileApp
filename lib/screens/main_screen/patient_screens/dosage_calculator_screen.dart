@@ -13,14 +13,19 @@ class DosageCalculatorScreen extends StatefulWidget {
 class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
   final TextEditingController weightController = TextEditingController();
   final TextEditingController factorLevelController = TextEditingController();
+  final TextEditingController notesController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
-  
+
   String selectedType = 'Hemophilia A';
   String userRole = '';
   String userHemophiliaType = '';
   bool isLoading = true;
   bool canEditHemophiliaType = false;
+  bool autoSaveCalculations = true;
+  bool isSaving = false;
   double? result;
+  List<Map<String, dynamic>> calculationHistory = [];
+  Map<String, dynamic>? userSettings;
 
   final List<String> hemophiliaTypes = [
     'Hemophilia A',
@@ -32,11 +37,11 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadUserSettings();
+    _loadCalculationHistory();
   }
 
-  // TODO: Add loading indicator while fetching user profile
-  // TODO: Add error handling for network issues
-  // TODO: Cache user profile data to avoid repeated API calls
+  // Load user profile data
   Future<void> _loadUserProfile() async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -45,7 +50,8 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
         setState(() {
           if (userProfile != null) {
             userRole = userProfile['role'] ?? '';
-            userHemophiliaType = userProfile['hemophiliaType'] ?? 'Hemophilia A';
+            userHemophiliaType =
+                userProfile['hemophiliaType'] ?? 'Hemophilia A';
             selectedType = userHemophiliaType;
             canEditHemophiliaType = userRole == 'caregiver';
           } else {
@@ -77,7 +83,7 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
         canEditHemophiliaType = false;
         isLoading = false;
       });
-      
+
       // Show error to user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -90,10 +96,56 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
     }
   }
 
-  // TODO: Add more sophisticated dosage calculation formulas
-  // TODO: Add safety warnings for high dosages
-  // TODO: Save calculation history for future reference
-  void calculateDosage() {
+  // Load user calculation settings
+  Future<void> _loadUserSettings() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final settings = await _firestoreService.getUserCalculationSettings(
+          uid,
+        );
+        setState(() {
+          userSettings = settings;
+          if (settings != null) {
+            // Pre-fill fields with saved defaults
+            if (settings['defaultWeight'] != null &&
+                weightController.text.isEmpty) {
+              weightController.text = settings['defaultWeight'].toString();
+            }
+            if (settings['defaultTargetLevel'] != null &&
+                factorLevelController.text.isEmpty) {
+              factorLevelController.text = settings['defaultTargetLevel']
+                  .toString();
+            }
+            autoSaveCalculations = settings['autoSaveCalculations'] ?? true;
+          }
+        });
+      }
+    } catch (e) {
+      print('Error loading user settings: $e');
+    }
+  }
+
+  // Load calculation history
+  Future<void> _loadCalculationHistory() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        final history = await _firestoreService.getDosageCalculationHistory(
+          uid,
+          limit: 10,
+        );
+        setState(() {
+          calculationHistory = history;
+        });
+      }
+    } catch (e) {
+      print('Error loading calculation history: $e');
+    }
+  }
+
+  // Calculate dosage with database integration
+  void calculateDosage() async {
     final weight = double.tryParse(weightController.text);
     final factorLevel = double.tryParse(factorLevelController.text);
 
@@ -119,6 +171,69 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
     setState(() {
       result = dosage;
     });
+
+    // Save calculation to database if auto-save is enabled
+    if (autoSaveCalculations && dosage > 0) {
+      _saveCalculationToDatabase(weight, factorLevel, dosage);
+    }
+  }
+
+  // Save calculation to database
+  Future<void> _saveCalculationToDatabase(
+    double weight,
+    double factorLevel,
+    double dosage,
+  ) async {
+    try {
+      setState(() {
+        isSaving = true;
+      });
+
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await _firestoreService.saveDosageCalculation(
+          uid: uid,
+          hemophiliaType: selectedType,
+          weight: weight,
+          targetFactorLevel: factorLevel,
+          calculatedDosage: dosage,
+          notes: notesController.text.trim(),
+        );
+
+        // Refresh calculation history
+        _loadCalculationHistory();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Calculation saved to history'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error saving calculation: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save calculation: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        isSaving = false;
+      });
+    }
   }
 
   @override
@@ -133,6 +248,14 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
         foregroundColor: Colors.white,
         backgroundColor: Colors.green,
         elevation: 0,
+        actions: [
+          if (calculationHistory.isNotEmpty)
+            IconButton(
+              onPressed: _showCalculationHistory,
+              icon: Icon(Icons.history),
+              tooltip: 'View History',
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -226,7 +349,15 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                         ),
                         SizedBox(height: 16),
                         _buildHemophiliaTypeSelector(),
-                        
+
+                        SizedBox(height: 16),
+                        // Notes field
+                        _buildNotesField(),
+
+                        SizedBox(height: 16),
+                        // Auto-save toggle
+                        _buildAutoSaveToggle(),
+
                         SizedBox(height: 24),
 
                         // Calculate Button
@@ -234,7 +365,7 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton.icon(
-                            onPressed: calculateDosage,
+                            onPressed: isSaving ? null : calculateDosage,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
@@ -243,9 +374,18 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            icon: Icon(FontAwesomeIcons.calculator, size: 20),
+                            icon: isSaving
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Icon(FontAwesomeIcons.calculator, size: 20),
                             label: Text(
-                              'Calculate Dosage',
+                              isSaving ? 'Saving...' : 'Calculate Dosage',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
@@ -257,8 +397,7 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                         SizedBox(height: 24),
 
                         // Information Section
-                        if (!canEditHemophiliaType)
-                          _buildInfoBanner(),
+                        if (!canEditHemophiliaType) _buildInfoBanner(),
 
                         SizedBox(height: 24),
 
@@ -346,7 +485,10 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                       ),
                       SizedBox(height: 8),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -363,50 +505,6 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                     ],
                   ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionContainer({
-    required String title,
-    required IconData icon,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: Colors.green, size: 20),
-              ),
-              SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          ...children,
         ],
       ),
     );
@@ -445,19 +543,98 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
               hintStyle: TextStyle(color: Colors.grey.shade500),
               prefixIcon: Icon(icon, color: Colors.green),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
         ),
         SizedBox(height: 4),
         Text(
           helperText,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotesField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Notes (Optional)',
           style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: TextField(
+            controller: notesController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Add any notes about this calculation...',
+              hintStyle: TextStyle(color: Colors.grey.shade500),
+              prefixIcon: Icon(Icons.note_add, color: Colors.green),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAutoSaveToggle() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.auto_awesome, color: Colors.green),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Auto-save Calculations',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                Text(
+                  'Automatically save calculations to history',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: autoSaveCalculations,
+            onChanged: (value) {
+              setState(() {
+                autoSaveCalculations = value;
+              });
+            },
+            activeColor: Colors.green,
+          ),
+        ],
+      ),
     );
   }
 
@@ -476,7 +653,9 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
         SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: canEditHemophiliaType ? Colors.grey.shade50 : Colors.grey.shade100,
+            color: canEditHemophiliaType
+                ? Colors.grey.shade50
+                : Colors.grey.shade100,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade300),
           ),
@@ -484,7 +663,10 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
               ? DropdownButtonFormField<String>(
                   value: selectedType,
                   items: hemophiliaTypes
-                      .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                      .map(
+                        (type) =>
+                            DropdownMenuItem(value: type, child: Text(type)),
+                      )
                       .toList(),
                   onChanged: (val) {
                     if (val != null) setState(() => selectedType = val);
@@ -492,7 +674,10 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                   decoration: InputDecoration(
                     prefixIcon: Icon(Icons.bloodtype, color: Colors.green),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 )
               : Padding(
@@ -545,10 +730,7 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
                 SizedBox(height: 4),
                 Text(
                   'Your hemophilia type is set based on your profile and cannot be changed. Only caregivers can modify this setting.',
-                  style: TextStyle(
-                    color: Colors.blue.shade600,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.blue.shade600, fontSize: 13),
                 ),
               ],
             ),
@@ -570,7 +752,11 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 24),
+              Icon(
+                Icons.warning_amber,
+                color: Colors.orange.shade700,
+                size: 24,
+              ),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -594,6 +780,87 @@ class _DosageCalculatorScreenState extends State<DosageCalculatorScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showCalculationHistory() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Calculation History',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  itemCount: calculationHistory.length,
+                  itemBuilder: (context, index) {
+                    final calc = calculationHistory[index];
+                    final timestamp = calc['createdAt']?.toDate();
+                    return Card(
+                      margin: EdgeInsets.only(bottom: 12),
+                      child: ListTile(
+                        title: Text(
+                          '${calc['calculatedDosage'].toStringAsFixed(2)} IU',
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${calc['hemophiliaType']} • ${calc['weight']}kg • ${calc['targetFactorLevel']}%',
+                            ),
+                            if (calc['notes'] != null &&
+                                calc['notes'].isNotEmpty)
+                              Text(
+                                'Notes: ${calc['notes']}',
+                                style: TextStyle(fontStyle: FontStyle.italic),
+                              ),
+                            if (timestamp != null)
+                              Text(
+                                '${timestamp.day}/${timestamp.month}/${timestamp.year} ${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
+                              ),
+                          ],
+                        ),
+                        leading: Container(
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.calculate, color: Colors.green),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

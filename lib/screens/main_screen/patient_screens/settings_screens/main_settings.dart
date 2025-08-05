@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hemophilia_manager/auth/auth.dart';
 import 'package:hemophilia_manager/services/firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../../../main.dart'; // Import the themeNotifier
@@ -18,6 +17,7 @@ class _UserSettingsState extends State<UserSettings> {
   String? _name;
   String? _email;
   String? _photoUrl;
+  String? _userRole; // Add user role tracking
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -39,9 +39,28 @@ class _UserSettingsState extends State<UserSettings> {
       if (userData != null) {
         setState(() {
           _name = userData['name'] ?? '';
+          _userRole = userData['role'] ?? '';
         });
       }
     }
+  }
+
+  void _navigateToEditProfile() {
+    String route;
+    switch (_userRole) {
+      case 'patient':
+        route = '/user_info_settings';
+        break;
+      case 'caregiver':
+        route = '/caregiver_info_settings';
+        break;
+      case 'medical':
+        route = '/medical_info_settings';
+        break;
+      default:
+        route = '/user_info_settings'; // Default fallback
+    }
+    Navigator.pushNamed(context, route);
   }
 
   void _logout() async {
@@ -188,10 +207,12 @@ class _UserSettingsState extends State<UserSettings> {
                       ),
                       SizedBox(height: 8),
                       TextButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/user_info_settings');
-                        },
-                        icon: Icon(Icons.edit, size: 18, color: Colors.redAccent),
+                        onPressed: _navigateToEditProfile,
+                        icon: Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: Colors.redAccent,
+                        ),
                         label: Text(
                           'Edit Profile',
                           style: TextStyle(
@@ -236,43 +257,12 @@ class _UserSettingsState extends State<UserSettings> {
             _settingsTile(
               icon: FontAwesomeIcons.lock,
               title: 'Password',
-              onTap: () {},
+              onTap: () => Navigator.pushNamed(context, '/change_password'),
             ),
             _settingsTile(
               icon: FontAwesomeIcons.bell,
               title: 'Notification and Sounds',
               onTap: () {},
-            ),
-
-            SizedBox(height: 24),
-
-            // Appearance Section Header
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                'Appearance',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black87,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-
-            _settingsTile(
-              icon: FontAwesomeIcons.solidMoon,
-              title: 'Dark Mode',
-              trailing: Switch(
-                activeColor: Colors.green,
-                trackOutlineColor: WidgetStateProperty.all(Colors.grey.shade400),
-                value: themeNotifier.value == ThemeMode.dark,
-                onChanged: (value) {
-                  themeNotifier.value = value
-                      ? ThemeMode.dark
-                      : ThemeMode.light;
-                },
-              ),
             ),
 
             SizedBox(height: 24),
@@ -329,6 +319,15 @@ class _UserSettingsState extends State<UserSettings> {
               iconColor: Colors.red,
               textColor: Colors.red,
               onTap: _deleteAccount,
+            ),
+
+            SizedBox(height: 16),
+
+            Center(
+              child: Text(
+                'Version 1.0.0-Alpha',
+                style: TextStyle(color: Colors.grey.shade600),
+              ),
             ),
 
             SizedBox(height: 16),

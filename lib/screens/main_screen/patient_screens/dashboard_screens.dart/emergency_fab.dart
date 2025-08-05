@@ -12,6 +12,7 @@ class _EmergencyFabState extends State<EmergencyFab> {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
+      heroTag: "emergency_fab", // Unique tag to avoid conflicts
       onPressed: () {
         showModalBottomSheet(
           context: context,

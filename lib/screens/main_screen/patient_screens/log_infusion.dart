@@ -150,199 +150,201 @@ class _LogInfusionScreenState extends State<LogInfusionScreen> {
         backgroundColor: Colors.deepPurple,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          // Header Section
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.deepPurple,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.medical_services,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Record your infusion',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            'Keep track of your medication intake',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Form Content
-          Expanded(
-            child: SingleChildScrollView(
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              width: double.infinity,
               padding: EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // Medication Type Section
-                    _buildSectionContainer(
-                      title: 'Medication Information',
-                      icon: Icons.medication,
-                      children: [
-                        _buildMedicationSelector(),
-                        SizedBox(height: 16),
-                        _buildCustomInput(
-                          controller: _medicationController,
-                          label: 'Specific Medication Name',
-                          icon: Icons.medical_services_outlined,
-                          validator: (v) => v == null || v.isEmpty ? 'Enter medication name' : null,
+              decoration: BoxDecoration(
+                color: Colors.deepPurple,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        SizedBox(height: 16),
-                        _buildCustomInput(
-                          controller: _doseController,
-                          label: 'Dose (IU)',
-                          icon: Icons.colorize,
-                          keyboardType: TextInputType.number,
-                          validator: (v) => v == null || v.isEmpty ? 'Enter dose amount' : null,
+                        child: Icon(
+                          Icons.medical_services,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                      ],
-                    ),
-
-                    SizedBox(height: 20),
-
-                    // Date & Time Section
-                    _buildSectionContainer(
-                      title: 'When was this taken?',
-                      icon: Icons.schedule,
-                      children: [
-                        Row(
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: _buildDateTimeSelector(
-                                label: 'Date',
-                                value: _selectedDate != null 
-                                    ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
-                                    : 'Select date',
-                                icon: Icons.calendar_today,
-                                onTap: _pickDate,
+                            Text(
+                              'Record your infusion',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
-                            SizedBox(width: 16),
-                            Expanded(
-                              child: _buildDateTimeSelector(
-                                label: 'Time',
-                                value: _selectedTime != null 
-                                    ? _selectedTime!.format(context)
-                                    : 'Select time',
-                                icon: Icons.access_time,
-                                onTap: _pickTime,
+                            Text(
+                              'Keep track of your medication intake',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-
-                    SizedBox(height: 20),
-
-                    // Notes Section
-                    _buildSectionContainer(
-                      title: 'Additional Notes (Optional)',
-                      icon: Icons.note_outlined,
-                      children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+        
+            // Form Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // Medication Type Section
+                      _buildSectionContainer(
+                        title: 'Medication Information',
+                        icon: Icons.medication,
+                        children: [
+                          _buildMedicationSelector(),
+                          SizedBox(height: 16),
+                          _buildCustomInput(
+                            controller: _medicationController,
+                            label: 'Specific Medication Name',
+                            icon: Icons.medical_services_outlined,
+                            validator: (v) => v == null || v.isEmpty ? 'Enter medication name' : null,
                           ),
-                          child: TextFormField(
-                            controller: _notesController,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: 'Any additional notes about this infusion...',
-                              hintStyle: TextStyle(color: Colors.grey.shade500),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.all(16),
+                          SizedBox(height: 16),
+                          _buildCustomInput(
+                            controller: _doseController,
+                            label: 'Dose (IU)',
+                            icon: Icons.colorize,
+                            keyboardType: TextInputType.number,
+                            validator: (v) => v == null || v.isEmpty ? 'Enter dose amount' : null,
+                          ),
+                        ],
+                      ),
+        
+                      SizedBox(height: 20),
+        
+                      // Date & Time Section
+                      _buildSectionContainer(
+                        title: 'When was this taken?',
+                        icon: Icons.schedule,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildDateTimeSelector(
+                                  label: 'Date',
+                                  value: _selectedDate != null 
+                                      ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
+                                      : 'Select date',
+                                  icon: Icons.calendar_today,
+                                  onTap: _pickDate,
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: _buildDateTimeSelector(
+                                  label: 'Time',
+                                  value: _selectedTime != null 
+                                      ? _selectedTime!.format(context)
+                                      : 'Select time',
+                                  icon: Icons.access_time,
+                                  onTap: _pickTime,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+        
+                      SizedBox(height: 20),
+        
+                      // Notes Section
+                      _buildSectionContainer(
+                        title: 'Additional Notes (Optional)',
+                        icon: Icons.note_outlined,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: TextFormField(
+                              controller: _notesController,
+                              maxLines: 4,
+                              decoration: InputDecoration(
+                                hintText: 'Any additional notes about this infusion...',
+                                hintStyle: TextStyle(color: Colors.grey.shade500),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.all(16),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+        
+                      SizedBox(height: 32),
+        
+                      // Save Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSaving ? null : _saveInfusion,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          icon: _isSaving 
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(Icons.save, size: 20),
+                          label: Text(
+                            _isSaving ? 'Saving...' : 'Save Infusion',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-
-                    SizedBox(height: 32),
-
-                    // Save Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSaving ? null : _saveInfusion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        icon: _isSaving 
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Icon(Icons.save, size: 20),
-                        label: Text(
-                          _isSaving ? 'Saving...' : 'Save Infusion',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
