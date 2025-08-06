@@ -10,8 +10,44 @@ import 'package:hemophilia_manager/screens/main_screen/patient_screens/main_scre
 import 'package:hemophilia_manager/screens/main_screen/healthcare_provider_screen/healthcare_main_screen.dart';
 import 'package:hemophilia_manager/services/openai_service.dart';
 import 'package:hemophilia_manager/services/notification_service.dart';
+import 'package:hemophilia_manager/models/online/chat_message.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
+// Global conversation state that persists across screens
+class GlobalConversationState {
+  static final GlobalConversationState _instance =
+      GlobalConversationState._internal();
+  factory GlobalConversationState() => _instance;
+  GlobalConversationState._internal();
+
+  final List<ChatMessage> _messages = [];
+  final ValueNotifier<List<ChatMessage>> messagesNotifier = ValueNotifier([]);
+
+  List<ChatMessage> get messages => List.unmodifiable(_messages);
+
+  void addMessage(ChatMessage message) {
+    _messages.add(message);
+    messagesNotifier.value = List.from(_messages);
+  }
+
+  void clearMessages() {
+    _messages.clear();
+    messagesNotifier.value = [];
+  }
+
+  void initializeWithWelcomeMessage() {
+    if (_messages.isEmpty) {
+      addMessage(
+        ChatMessage(
+          text:
+              "Hello! I'm HemoAssist, your AI companion for hemophilia care and management. I'm here to help you with information about hemophilia, its symptoms, treatments, and lifestyle recommendations. How can I assist you today?",
+          isUser: false,
+        ),
+      );
+    }
+  }
+}
 
 // Function to save theme preference
 Future<void> saveThemeMode(ThemeMode themeMode) async {
@@ -39,6 +75,9 @@ void main() async {
   // Load saved theme preference
   final savedTheme = await loadThemeMode();
   themeNotifier.value = savedTheme;
+
+  // Initialize global conversation state
+  GlobalConversationState().initializeWithWelcomeMessage();
 
   // Initialize OpenAI service
   try {
@@ -324,7 +363,9 @@ class _AppInitializerState extends State<AppInitializer> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => AuthenticationLandingScreen()),
+          MaterialPageRoute(
+            builder: (context) => AuthenticationLandingScreen(),
+          ),
         );
       }
     }

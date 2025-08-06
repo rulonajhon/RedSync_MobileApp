@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hemophilia_manager/models/online/chat_message.dart';
 import 'package:hemophilia_manager/services/openai_service.dart';
+import '../../../main.dart';
 
 class ChatbotScreen extends StatefulWidget {
   const ChatbotScreen({super.key});
@@ -11,32 +12,19 @@ class ChatbotScreen extends StatefulWidget {
 }
 
 class _ChatbotScreenState extends State<ChatbotScreen> {
-  final List<ChatMessage> _messages = [];
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
+  late GlobalConversationState _conversationState;
 
   @override
   void initState() {
     super.initState();
-    _addWelcomeMessage();
-  }
-
-  void _addWelcomeMessage() {
-    _messages.add(
-      ChatMessage(
-        text:
-            "Hello! I'm HemoAssistant, your AI companion for hemophilia care and support. I'm here to help you with:\n\n"
-            "• Understanding hemophilia types and symptoms\n"
-            "• Treatment and medication guidance\n"
-            "• Lifestyle and activity recommendations\n"
-            "• Emergency care information\n"
-            "• Emotional support and resources\n\n"
-            "How can I assist you today?\n\n"
-            "*Please remember that I provide informational support only and cannot replace professional medical advice.*",
-        isUser: false,
-      ),
-    );
+    _conversationState = GlobalConversationState();
+    // Scroll to bottom when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
   }
 
   void _sendMessage() async {
@@ -46,7 +34,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     _textController.clear();
 
     setState(() {
-      _messages.add(ChatMessage(text: userMessage, isUser: true));
+      _conversationState.addMessage(
+        ChatMessage(text: userMessage, isUser: true),
+      );
       _isLoading = true;
     });
 
@@ -55,8 +45,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     try {
       // Convert messages to format expected by OpenAI API
       // Exclude the just-added user message from history
-      final chatHistory = _messages
-          .where((msg) => _messages.indexOf(msg) != _messages.length - 1)
+      final messages = _conversationState.messages;
+      final chatHistory = messages
+          .where((msg) => messages.indexOf(msg) != messages.length - 1)
           .map((msg) => msg.toMap())
           .toList();
 
@@ -67,12 +58,14 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
       if (response.isNotEmpty) {
         setState(() {
-          _messages.add(ChatMessage(text: response, isUser: false));
+          _conversationState.addMessage(
+            ChatMessage(text: response, isUser: false),
+          );
           _isLoading = false;
         });
       } else {
         setState(() {
-          _messages.add(
+          _conversationState.addMessage(
             ChatMessage(
               text:
                   "I'm sorry, I couldn't generate a response at the moment. Please try asking your question again.",
@@ -86,7 +79,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       _scrollToBottom();
     } catch (e) {
       setState(() {
-        _messages.add(
+        _conversationState.addMessage(
           ChatMessage(
             text:
                 "I apologize, but I'm having trouble connecting right now. Please check your internet connection and try again. If the problem persists, you may need to verify your API configuration.",
@@ -95,6 +88,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         );
         _isLoading = false;
       });
+
       _scrollToBottom();
     }
   }
@@ -172,8 +166,8 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ),
               onPressed: () {
                 setState(() {
-                  _messages.clear();
-                  _addWelcomeMessage();
+                  _conversationState.clearMessages();
+                  _conversationState.initializeWithWelcomeMessage();
                 });
               },
               tooltip: 'Clear chat',
@@ -213,21 +207,29 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
           // Messages Area
           Expanded(
-            child: _messages.isEmpty && !_isLoading
-                ? _buildEmptyState()
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                    itemCount: _messages.length + (_isLoading ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == _messages.length && _isLoading) {
-                        return _buildLoadingMessage();
-                      }
+            child: ValueListenableBuilder<List<ChatMessage>>(
+              valueListenable: _conversationState.messagesNotifier,
+              builder: (context, messages, child) {
+                return messages.isEmpty && !_isLoading
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 20,
+                        ),
+                        itemCount: messages.length + (_isLoading ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == messages.length && _isLoading) {
+                            return _buildLoadingMessage();
+                          }
 
-                      final message = _messages[index];
-                      return _buildMessageBubble(message, index);
-                    },
-                  ),
+                          final message = messages[index];
+                          return _buildMessageBubble(message, index, messages);
+                        },
+                      );
+              },
+            ),
           ),
 
           // Input Area
@@ -274,9 +276,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message, int index) {
+  Widget _buildMessageBubble(
+    ChatMessage message,
+    int index,
+    List<ChatMessage> messages,
+  ) {
     final isConsecutive =
-        index > 0 && _messages[index - 1].isUser == message.isUser;
+        index > 0 && messages[index - 1].isUser == message.isUser;
 
     return Container(
       margin: EdgeInsets.only(
@@ -448,7 +454,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         child: Column(
           children: [
             // Quick suggestion chips
-            if (_messages.length <= 1) ...[
+            if (_conversationState.messages.length <= 1) ...[
               SizedBox(
                 height: 40,
                 child: ListView(

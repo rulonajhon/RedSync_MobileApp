@@ -146,11 +146,7 @@ class _CommunityScreenState extends State<CommunityScreen>
       body: SafeArea(
         child: TabBarView(
           controller: _tabController,
-          children: [
-            _buildFeedTab(),
-            _buildGroupsTab(),
-            _buildEventsTab(),
-          ],
+          children: [_buildFeedTab(), _buildGroupsTab(), _buildEventsTab()],
         ),
       ),
     );
