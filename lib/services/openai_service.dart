@@ -114,7 +114,7 @@ class OpenAIService {
     // Check for simple greeting patterns
     if (lowercasePrompt.trim().length <= 20) {
       for (final greeting in greetings) {
-        if (lowercasePrompt.contains(greeting) &&
+        if (lowercasePrompt.contains(greeting) && 
             !lowercasePrompt.contains('weather') &&
             !lowercasePrompt.contains('joke') &&
             !lowercasePrompt.contains('cook') &&
@@ -242,19 +242,6 @@ class OpenAIService {
     // Check if any hemophilia-related keywords are present
     for (final keyword in hemophiliaKeywords) {
       if (lowercasePrompt.contains(keyword)) {
-        // Avoid false positives for common non-medical contexts
-        if (keyword == 'sports' &&
-            (lowercasePrompt.contains('score') ||
-                lowercasePrompt.contains('game') ||
-                lowercasePrompt.contains('team'))) {
-          continue;
-        }
-        if (keyword == 'exercise' &&
-            (lowercasePrompt.contains('workout') ||
-                lowercasePrompt.contains('gym') ||
-                lowercasePrompt.contains('fitness'))) {
-          continue;
-        }
         return true;
       }
     }

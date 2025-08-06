@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../services/community_service.dart';
 
 class CommunityScreen extends StatefulWidget {
@@ -23,46 +22,10 @@ class _CommunityScreenState extends State<CommunityScreen>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 2,
       vsync: this,
-    ); // Changed back to 3 tabs
+    ); // Changed from 3 to 2
     _postsStream = _communityService.getPostsStream();
-
-    // Check for navigation arguments in the next frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _handleNavigationArguments();
-    });
-  }
-
-  void _handleNavigationArguments() {
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    if (args != null && args.containsKey('openPostId')) {
-      final postId = args['openPostId'] as String;
-      _openSpecificPost(postId);
-    }
-  }
-
-  void _openSpecificPost(String postId) async {
-    try {
-      // Get the specific post by ID
-      final post = await _communityService.getPostById(postId);
-      if (post != null) {
-        // Navigate to the post detail screen
-        _expandPost(post);
-      } else {
-        print('Post not found: $postId');
-        // Show a snackbar or toast if post is not found
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Post not found')));
-      }
-    } catch (e) {
-      print('Error opening specific post: $e');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading post')));
-    }
   }
 
   @override
@@ -86,25 +49,6 @@ class _CommunityScreenState extends State<CommunityScreen>
           icon: Icon(FontAwesomeIcons.arrowLeft, size: 18),
         ),
         actions: [
-          Container(
-            margin: EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: IconButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Search feature coming soon'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              icon: Icon(FontAwesomeIcons.magnifyingGlass, size: 16),
-              color: Colors.grey.shade600,
-            ),
-          ),
           Container(
             margin: EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
@@ -137,7 +81,7 @@ class _CommunityScreenState extends State<CommunityScreen>
               tabs: [
                 Tab(text: 'Feed'),
                 Tab(text: 'Groups'),
-                Tab(text: 'Events'),
+                // Removed Events tab
               ],
             ),
           ),
@@ -146,7 +90,10 @@ class _CommunityScreenState extends State<CommunityScreen>
       body: SafeArea(
         child: TabBarView(
           controller: _tabController,
-          children: [_buildFeedTab(), _buildGroupsTab(), _buildEventsTab()],
+          children: [
+            _buildFeedTab(),
+            _buildGroupsTab(),
+          ], // Removed _buildEventsTab()
         ),
       ),
     );
@@ -408,7 +355,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                           ),
                           SizedBox(width: 8),
                           Text(
-                            _formatTimestamp(_safeTimestamp(post['timestamp'])),
+                            _formatTimestamp(post['timestamp']),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade600,
@@ -686,37 +633,6 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEventsTab() {
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              _buildComingSoonItem(
-                icon: FontAwesomeIcons.calendar,
-                title: 'Community Events',
-                subtitle: 'Local meetups, conferences, and support events',
-              ),
-              SizedBox(height: 16),
-              _buildComingSoonItem(
-                icon: FontAwesomeIcons.chalkboardUser,
-                title: 'Educational Webinars',
-                subtitle: 'Learn from experts about hemophilia management',
-              ),
-              SizedBox(height: 16),
-              _buildComingSoonItem(
-                icon: FontAwesomeIcons.handHoldingHeart,
-                title: 'Fundraising Events',
-                subtitle: 'Participate in awareness and fundraising activities',
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1103,14 +1019,6 @@ class _CommunityScreenState extends State<CommunityScreen>
     }
   }
 
-  // Helper method to safely convert timestamp
-  DateTime _safeTimestamp(dynamic timestamp) {
-    if (timestamp == null) return DateTime.now();
-    if (timestamp is DateTime) return timestamp;
-    if (timestamp is Timestamp) return timestamp.toDate();
-    return DateTime.now(); // Fallback
-  }
-
   String _formatTimestamp(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
@@ -1220,9 +1128,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                                 ),
                                 SizedBox(width: 8),
                                 Text(
-                                  _formatTimestamp(
-                                    _safeTimestamp(post['timestamp']),
-                                  ),
+                                  _formatTimestamp(post['timestamp']),
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Colors.grey.shade600,
@@ -1618,14 +1524,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         );
       }
     }
-  }
-
-  // Helper method to safely convert timestamp
-  DateTime _safeTimestamp(dynamic timestamp) {
-    if (timestamp == null) return DateTime.now();
-    if (timestamp is DateTime) return timestamp;
-    if (timestamp is Timestamp) return timestamp.toDate();
-    return DateTime.now(); // Fallback
   }
 
   String _formatTimestamp(DateTime timestamp) {

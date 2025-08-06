@@ -13,6 +13,7 @@ class NotificationService {
 
   bool _isInitialized = false;
 
+<<<<<<< HEAD
   // Add a navigation callback for handling notification taps
   static void Function(String)? _onNotificationTap;
 
@@ -21,6 +22,8 @@ class NotificationService {
     _onNotificationTap = callback;
   }
 
+=======
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -51,6 +54,7 @@ class NotificationService {
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
+<<<<<<< HEAD
         // Handle notification tap safely
         try {
           print('Notification tapped: ${response.payload}');
@@ -59,12 +63,17 @@ class NotificationService {
           print('Error handling notification tap: $e');
           // Don't crash the app if notification handling fails
         }
+=======
+        // Handle notification tap
+        print('Notification tapped: ${response.payload}');
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
       },
     );
 
     _isInitialized = true;
   }
 
+<<<<<<< HEAD
   // Handle notification tap safely
   void _handleNotificationTap(NotificationResponse response) {
     try {
@@ -101,6 +110,8 @@ class NotificationService {
     }
   }
 
+=======
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
   Future<bool> requestPermissions() async {
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
         _flutterLocalNotificationsPlugin
@@ -140,6 +151,7 @@ class NotificationService {
     required DateTime scheduledTime,
     String? payload,
   }) async {
+<<<<<<< HEAD
     try {
       if (!_isInitialized) await initialize();
 
@@ -154,6 +166,11 @@ class NotificationService {
         scheduledTime = DateTime.now().add(Duration(minutes: 1));
       }
 
+=======
+    if (!_isInitialized) await initialize();
+
+    try {
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
             'medication_reminders',
@@ -202,8 +219,12 @@ class NotificationService {
       print('Notification scheduled successfully!');
     } catch (e) {
       print('Error scheduling medication reminder: $e');
+<<<<<<< HEAD
       // Don't rethrow to prevent app crashes - just log the error
       // The app should continue functioning even if notifications fail
+=======
+      rethrow;
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
     }
   }
 
@@ -215,6 +236,7 @@ class NotificationService {
     required RepeatInterval repeatInterval,
     String? payload,
   }) async {
+<<<<<<< HEAD
     try {
       if (!_isInitialized) await initialize();
 
@@ -224,6 +246,11 @@ class NotificationService {
         return;
       }
 
+=======
+    if (!_isInitialized) await initialize();
+
+    try {
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
             'medication_reminders',
@@ -286,7 +313,11 @@ class NotificationService {
       print('Repeating notification scheduled successfully!');
     } catch (e) {
       print('Error scheduling repeating medication reminder: $e');
+<<<<<<< HEAD
       // Don't rethrow to prevent app crashes - just log the error
+=======
+      rethrow;
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
     }
   }
 
@@ -314,6 +345,7 @@ class NotificationService {
         location = tz.UTC;
       }
 
+<<<<<<< HEAD
       // Convert to TZDateTime with additional safety checks
       tz.TZDateTime tzDateTime;
       try {
@@ -347,11 +379,16 @@ class NotificationService {
         }
       }
 
+=======
+      // Convert to TZDateTime
+      final tzDateTime = tz.TZDateTime.from(dateTime, location);
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
       print(
         'Converted DateTime $dateTime to TZDateTime $tzDateTime in timezone ${location.name}',
       );
       return tzDateTime;
     } catch (e) {
+<<<<<<< HEAD
       print(
         'Error: Timezone conversion failed completely, using current time in UTC: $e',
       );
@@ -364,6 +401,17 @@ class NotificationService {
         fallbackTime.hour,
         fallbackTime.minute,
         fallbackTime.second,
+=======
+      print('Error: Timezone conversion failed completely: $e');
+      // As a last resort, create a TZDateTime in UTC
+      return tz.TZDateTime.utc(
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
+        dateTime.hour,
+        dateTime.minute,
+        dateTime.second,
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
       );
     }
   }
@@ -465,6 +513,7 @@ class NotificationService {
       print('Error getting pending notifications: $e');
     }
   }
+<<<<<<< HEAD
 
   // Create notification for post interactions (like, comment, share)
   Future<void> showPostNotification({
@@ -627,4 +676,6 @@ class NotificationService {
       print('Error showing medication reminder notification: $e');
     }
   }
+=======
+>>>>>>> 4b0ff77affb444a0ec3f66fb1eb3be6963703be5
 }

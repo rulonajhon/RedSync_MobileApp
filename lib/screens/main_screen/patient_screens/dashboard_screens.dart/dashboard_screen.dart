@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hemophilia_manager/services/firestore.dart';
+import 'package:hemophilia_manager/screens/main_screen/patient_screens/dashboard_screens.dart/emergency_fab.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -17,7 +17,6 @@ class _DashboardState extends State<Dashboard> {
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   String _userName = '';
   bool _isLoading = true;
-  bool _isGuest = false;
   List<Map<String, dynamic>> _recentBleeds = [];
   List<Map<String, dynamic>> _recentInfusions = [];
   List<Map<String, dynamic>> _recentActivities = [];

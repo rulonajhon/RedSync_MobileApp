@@ -12,7 +12,7 @@ plugins {
 
 // Load secrets from properties file
 val secretsPropertiesFile = rootProject.file("secrets.properties")
-val secretsProperties = Properties()
+val secretsProperties = java.util.Properties()
 if (secretsPropertiesFile.exists()) {
     secretsProperties.load(secretsPropertiesFile.inputStream())
 }
